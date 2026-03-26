@@ -14,6 +14,8 @@ ZephyrRTOS_TAD_logs/*
 # compilation and binaries
 */Debug/*
 */Release/*
+*.mex
+*.bin
 
 # settings 
 */.settings/*
