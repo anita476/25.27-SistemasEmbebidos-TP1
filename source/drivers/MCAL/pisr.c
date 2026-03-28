@@ -1,13 +1,7 @@
 #include "include/pisr.h"
 #include "hardware.h"
 
-/***************************************************************************/ /**
-   @file     pisr.c
-   @brief    Driver implementation for periodic interrupts using sys clock
-  (simulates more than one timer)
-  ******************************************************************************/
-
-#define TICK_MS 125
+#define TICK_MS 15
 static bool active; // evaluate if systick was enabled
 static unsigned int ticks;
 
@@ -30,7 +24,7 @@ bool pisrRegister(pisr_callback_t fun, unsigned int period) {
 	if (!active) {
 		// if it wasnt, activate
 		SysTick->CTRL = 0x00;									 // reset everything
-		SysTick->LOAD = (TICK_MS * PISR_FREQUENCY_HZ * 100) - 1; // 12499999L; // <= 125 ms @ 100Mhz
+		SysTick->LOAD = (TICK_MS * PISR_FREQUENCY_HZ * 100) - 1; // Changed it to every 5ms bc encoder needs it faster
 		SysTick->VAL = 0x00;									 // current value
 		SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
 		active = true;

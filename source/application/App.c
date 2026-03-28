@@ -8,54 +8,50 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "../../SDK/CMSIS/fsl_device_registers.h"
+#include "../drivers/HAL/include/encoder.h"
 #include "../drivers/MCAL/include/gpio.h"
 #include "../drivers/MCAL/include/pisr.h"
 #include "include/board.h"
+#include <stdio.h>
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
 
 /*******************************************************************************
- * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
- ******************************************************************************/
-void redLed_PISR(void);
-void blueLed_PISR(void);
-/*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
  *******************************************************************************
  ******************************************************************************/
-
-/* Función que se llama 1 vez, al comienzo del programa */
 /* interrupts are disabled at this point*/
 void App_Init(void) {
-	gpioMode(PIN_LED_BLUE, OUTPUT);
+	gpioMode(PIN_LED_GREEN, OUTPUT);
 	gpioMode(PIN_LED_RED, OUTPUT);
+	gpioMode(PIN_LED_BLUE, OUTPUT);
 
-	gpioWrite(PIN_LED_BLUE, !LED_ACTIVE);
+	gpioWrite(PIN_LED_GREEN, !LED_ACTIVE);
 	gpioWrite(PIN_LED_RED, !LED_ACTIVE);
+	gpioWrite(PIN_LED_BLUE, !LED_ACTIVE);
 
-	// configure periodic leds
-	pisrRegister((pisr_callback_t) redLed_PISR, 4); // every half a second
-
-	pisrRegister((pisr_callback_t) blueLed_PISR, 8); // every second
+	encoderInit(PIN_ENC_CHNA, PIN_ENC_CHNB);
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
-	// nothing
+	static bool dumped = false;
+	EncoderDir ev;
+	while ((ev = popEvent()) != ENC_NONE) { // pop all in the queue
+		if (ev == ENC_CCW) {
+			/**
+			 * Obs!! For printf must enable semihosting:
+			 * Set to RedLink (-semihosting) in:
+			 *  proj properties > C/C++ Build > Settings > MCU Linker >Managed Linker Script > Library
+			 *
+			 */
+			printf("CCW step\n");
+		}
+		if (ev == ENC_CW) {
+			printf("CW step\n");
+		}
+	}
 }
-
-/*******************************************************************************
- *************************************************************/
-
-void redLed_PISR(void) {
-	gpioToggle(PIN_LED_RED);
-}
-void blueLed_PISR(void) {
-	gpioToggle(PIN_LED_BLUE);
-}
-
-/*******************************************************************************
- ******************************************************************************/

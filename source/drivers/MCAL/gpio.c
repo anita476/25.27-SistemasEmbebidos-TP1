@@ -3,10 +3,11 @@
 #include "../../../SDK/startup/hardware.h"
 #include <stdint.h>
 
-/***************************************************************************/ /**
-   @file     gpio.c
-   @brief    Driver implementation for gpio access driver
-  ******************************************************************************/
+/*
+ * @file gpio.c
+ * @brief Driver implementation for gpio access
+ *
+ * */
 
 #define PULLDOWN 0
 #define PULLUP 1
@@ -76,8 +77,15 @@ void gpioMode(pin_t pin, uint8_t mode) {
 	 * */
 	SIM->SCGC5 |= port_clock_masks[port_num];
 
-	// Building pcr
-	uint32_t pcr = PORT_PCR_MUX(PORT_mGPIO) | PORT_PCR_DSE(1) | PORT_PCR_SRE(1) | PORT_PCR_IRQC(PORT_eDisabled);
+	/* Building pcr
+	 * built sequentially for clarity... OBS!! CHANGE THIS TO BE IN ONE LINE
+	 */
+	uint32_t pcr = PORT_PCR_MUX(PORT_mGPIO); // aet to gpio mode
+
+	pcr |= PORT_PCR_DSE(1);				  // drive strtength high
+	pcr |= PORT_PCR_SRE(1);				  // slew rate slow
+	pcr |= PORT_PCR_IRQC(PORT_eDisabled); // disable interrupts
+
 	if (mode == INPUT_PULLDOWN) {
 		pcr |= PORT_PCR_PE(1);		  // pull enable
 		pcr |= PORT_PCR_PS(PULLDOWN); // pull select
@@ -126,10 +134,8 @@ bool gpioRead(pin_t pin) {
 
 /**
 Obs! We need to store the callbacks for each pin
-2 approaches -> either store a full matrix with access via index por each
-PORT-PIN
-												-> or store a maximum array of
-structures that contain each PIN+CALLBACK
+2 approaches -> either store a full matrix with access via index por each PORT-PIN
+						-> or store a maximum array of structures that contain each PIN+CALLBACK
  */
 bool gpioIRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun) {
 	int port = PIN2PORT(pin);
@@ -146,8 +152,7 @@ bool gpioIRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun) {
 
 	irqCallbacks[port].callbacks[irqCallbacks[port].used].callback_fn = irqFun;
 	irqCallbacks[port].callbacks[irqCallbacks[port].used].pin = PIN2NUM(pin); // Obs! port pin is stored
-	irqCallbacks[port].used++; // if all portX irqs have the same prio it should
-							   // be fine -> no concurrency
+	irqCallbacks[port].used++; // if all portX irqs have the same prio it should be fine -> no concurrency
 
 	return true;
 }
@@ -169,8 +174,8 @@ void PORTE_IRQHandler(void) {
 }
 
 static void execute_callbacks(int port) {
-	// Obs! In this case i dont need to cycle through the whole PORTX_ISFR, just
-	// checking the actual interrupts configured and checking isr is enough
+	// Obs! In this case i dont need to cycle through the whole PORTX_ISFR, just checking the actual interrupts
+	// configured and checking isr is enough
 	int i = irqCallbacks[port].used;
 	while (i) {
 		int pin = irqCallbacks[port].callbacks[i - 1].pin;
