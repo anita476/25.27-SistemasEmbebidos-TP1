@@ -33,6 +33,7 @@
 #define PIN_ENC_CHNA PORTNUM2PIN(PC, 5)
 #define PIN_ENC_CHNB PORTNUM2PIN(PC, 3)
 
+#define PIN_SW_ENC PORTNUM2PIN(PB, 23)
 // Encoder board leds
 // #define PIN_ENC_LED1
 // #define PIN_ENC_LED2

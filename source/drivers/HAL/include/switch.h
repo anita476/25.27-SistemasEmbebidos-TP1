@@ -25,13 +25,17 @@ typedef struct {
 } swEvent;
 
 /**
+ * @brief Initialize the switch driver
+ */
+void swInit();
+/**
  * @brief Register a switch with the corresponding pin,
  * @return True if successful, false if not
  * @param pin Absolute mcu pin for switch
  * @param active_i¿on Active on low or high
+ * @param pullconfig Pull configuration
  **/
-sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_on);
-
+sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig);
 /**
  * @brief Unregister a switch
  * @param handle Switch handle, delivered at registration

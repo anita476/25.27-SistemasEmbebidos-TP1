@@ -1,3 +1,4 @@
+/* ── switch.c ─────────────────────────────────────────────────────── */
 #include "include/switch.h"
 #include "../MCAL/include/pisr.h"
 #include "include/timer.h"
@@ -17,7 +18,8 @@ typedef enum {
 	SW_STATE_DEBOUNCE,
 	SW_STATE_PRESSED,
 	SW_STATE_RELEASED,
-	SW_STATE_WAIT_RELEASE, /*waiting for button release */
+	SW_STATE_PRESSED_2, /* second press, measuring duration    */
+	SW_STATE_WAIT_RELEASE,
 } swState_t;
 
 typedef struct {
@@ -38,6 +40,11 @@ static uint8_t sw_count = 0;
 static void swPushEvent(swEvent ev);
 static void swProcessSwitch(uint8_t i);
 
+void swPisr(void);
+
+void swInit() {
+	pisrRegister(swPisr, 1);
+}
 sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	if (sw_count >= SW_MAX_SWS)
 		return INVALID_SW_HANDLE;
@@ -48,7 +55,7 @@ sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 
 	uint8_t handle = sw_count++;
 
-	gpioMode(pin, pullconfig == PULL_DOWN ? INPUT_PULLDOWN : (pullconfig == PULL_UP ? INPUT_PULLUP : INPUT));
+	gpioMode(pin, pullconfig == PULL_DOWN ? INPUT_PULLDOWN : pullconfig == PULL_UP ? INPUT_PULLUP : INPUT);
 
 	config[handle].pin = pin;
 	config[handle].active_on = active_level;
@@ -63,9 +70,8 @@ sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 void swUnregister(sw_handle_t handle) {
 	if (handle < 0 || handle >= SW_MAX_SWS)
 		return;
-
 	timerStop(ctx[handle].timer);
-	timerDelete(ctx[handle].timer); /* free the timer slot */
+	timerDelete(ctx[handle].timer);
 	config[handle].registered = false;
 }
 
@@ -73,13 +79,13 @@ swEvent swPopEvent(void) {
 	swEvent ret = {.event_type = SW_EVENT_NONE, .swPin = 0};
 	if (_head == _tail)
 		return ret;
-
 	ret = queue[_tail];
 	_tail = (_tail + 1u) & (SW_MAX_PENDING_EVENTS - 1u);
 	return ret;
 }
 
-pisr_callback_t swPisr(void) {
+void swPisr(void) /* match pisr_callback_t  */
+{
 	for (uint8_t i = 0; i < sw_count; i++)
 		if (config[i].registered)
 			swProcessSwitch(i);
@@ -88,12 +94,11 @@ pisr_callback_t swPisr(void) {
 static void swPushEvent(swEvent ev) {
 	uint8_t next = (_head + 1u) & (SW_MAX_PENDING_EVENTS - 1u);
 	if (next == _tail)
-		return; /* queue full, drop event      */
+		return;
 	queue[_head] = ev;
 	_head = next;
 }
 
-// @todo Uses state machine, if its too expensive we may have to do processing from main loop
 static void swProcessSwitch(uint8_t i) {
 	uint8_t current = gpioRead(config[i].pin);
 	bool active = ISACTIVE(current, config[i].active_on);
@@ -129,22 +134,32 @@ static void swProcessSwitch(uint8_t i) {
 			}
 			break;
 
-		case SW_STATE_WAIT_RELEASE: /* consume release, no event */
-			if (!active)
-				c->state = SW_STATE_IDLE;
-			break;
-
 		case SW_STATE_RELEASED:
 			if (active) {
-				timerStop(c->timer);
-				ev.event_type = SW_EVENT_DOUBLE_CLICK;
-				swPushEvent(ev);
-				c->state = SW_STATE_IDLE;
+				timerStart(c->timer, TIMER_MS2TICKS(LONG_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
+				c->state = SW_STATE_PRESSED_2;
 			} else if (timerExpired(c->timer)) {
 				ev.event_type = SW_EVENT_CLICK;
 				swPushEvent(ev);
 				c->state = SW_STATE_IDLE;
 			}
+			break;
+
+		case SW_STATE_PRESSED_2:
+			if (!active) {
+				ev.event_type = SW_EVENT_DOUBLE_CLICK;
+				swPushEvent(ev);
+				c->state = SW_STATE_IDLE;
+			} else if (timerExpired(c->timer)) {
+				ev.event_type = SW_EVENT_LONG_CLICK;
+				swPushEvent(ev);
+				c->state = SW_STATE_WAIT_RELEASE;
+			}
+			break;
+
+		case SW_STATE_WAIT_RELEASE:
+			if (!active)
+				c->state = SW_STATE_IDLE;
 			break;
 	}
 }
