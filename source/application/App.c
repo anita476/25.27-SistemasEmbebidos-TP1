@@ -38,7 +38,6 @@ void App_Init(void) {
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
-	static bool dumped = false;
 	EncoderDir ev;
 	while ((ev = popEvent()) != ENC_NONE) { // pop all in the queue
 		if (ev == ENC_CCW) {

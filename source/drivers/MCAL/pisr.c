@@ -1,7 +1,6 @@
 #include "include/pisr.h"
 #include "hardware.h"
 
-#define TICK_MS 15
 static bool active; // evaluate if systick was enabled
 static unsigned int ticks;
 

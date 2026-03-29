@@ -1,8 +1,8 @@
-/***************************************************************************//**
-  @file     timer.h
-  @brief    Timer driver. Advance implementation, Non-Blocking services
-  @author   Nicolás Magliola
- ******************************************************************************/
+/***************************************************************************/ /**
+   @file     timer.h
+   @brief    Timer driver. Advance implementation, Non-Blocking services
+   @author   Nicolás Magliola
+  ******************************************************************************/
 
 #ifndef _TIMER_H_
 #define _TIMER_H_
@@ -11,20 +11,20 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include <stdint.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/
+// How many pisr ints should pass untill calling timer
+#define TIMER_PERIOD 1
 
-#define TIMER_TICK_MS       1
-#define TIMER_MS2TICKS(ms)  ((ms)/TIMER_TICK_MS)
+#define TIMER_TICK_MS (TICK_MS * TIMER_PERIOD)
+#define TIMER_MS2TICKS(ms) ((ms) / TIMER_TICK_MS)
 
-#define TIMERS_MAX_CANT     16
-#define TIMER_INVALID_ID    255
-
+#define TIMERS_MAX_CANT 16
+#define TIMER_INVALID_ID 255
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
@@ -37,7 +37,6 @@ enum { TIM_MODE_SINGLESHOT, TIM_MODE_PERIODIC, CANT_TIM_MODES };
 typedef uint32_t tim_tick_t;
 typedef uint8_t tim_id_t;
 typedef void (*tim_callback_t)(void);
-
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -52,13 +51,11 @@ typedef void (*tim_callback_t)(void);
  */
 void timerInit(void);
 
-
 /**
  * @brief Request an timer
  * @return ID of the timer to use
  */
 tim_id_t timerGetId(void);
-
 
 /**
  * @brief Begin to run a new timer
@@ -70,13 +67,11 @@ tim_id_t timerGetId(void);
  */
 bool timerStart(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback);
 
-
 /**
  * @brief Finish to run a timer
  * @param id ID of the timer to stop
  */
 void timerStop(tim_id_t id);
-
 
 /**
  * @brief Verify if a timer has run timeout
@@ -85,13 +80,17 @@ void timerStop(tim_id_t id);
  */
 bool timerExpired(tim_id_t id);
 
-
 /**
  * @brief Call respective callbacks if timeout ocurrs. Must be call from main loop.
  */
 void timerUpdate(void);
 
-
+/**
+ * @brief Delete a timer (frees its space). Especially for period interrupts. To use another timer must request a new
+ * one.
+ * @param id Id of the timer to delete
+ */
+void timerDelete(tim_id_t id);
 
 /*******************************************************************************
  ******************************************************************************/
