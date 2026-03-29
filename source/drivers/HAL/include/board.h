@@ -11,7 +11,7 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 
-#include "../../drivers/MCAL/include/gpio.h"
+#include "../../MCAL/include/gpio.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -34,17 +34,20 @@
 #define PIN_ENC_CHNB PORTNUM2PIN(PC, 3)
 #define PIN_SW_ENC PORTNUM2PIN(PB, 23)
 
-// DEnc board status leds encoder pins
-#define PIN_U1B_STATUS0
-#define PIN_U1B_STATUS1
-#define ST_ACTIVE LOW
+// DEnc board status leds selection pins
+#define PIN_U1B_STATUS0 PORTNUM2PIN(PC, 7)
+#define PIN_U1B_STATUS1 PORTNUM2PIN(PC, 0)
 
-// DEnc board digit display pins
-#define PIN_U1A_SEL0
-#define PIN_U1A_SEL1
+// DEnc board digit display selection pins
+#define PIN_U1A_SEL0 PORTNUM2PIN(PC, 9)
+#define PIN_U1A_SEL1 PORTNUM2PIN(PC, 8)
+
+#define DEC_ACTIVE LOW
 
 #define SW_ACTIVE LOW
 #define SW_INPUT_TYPE INPUT_PULLUP // en realidad para sw3 no hace falta, para sw2 SI
+
+#define
 
 /*******************************************************************************
  ******************************************************************************/

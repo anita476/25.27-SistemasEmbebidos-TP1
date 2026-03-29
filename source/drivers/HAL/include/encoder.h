@@ -9,6 +9,7 @@
 #define DRIVERS_HAL_ENCODER_H_
 #include "../..//MCAL/include/gpio.h"
 #include "../../MCAL/include/pisr.h"
+#include "board.h"
 
 #define ENC_PISR_PERIOD 1 // in ticks -> @todo i think 125ms per tick is much too slow -> maybe not
 
@@ -31,7 +32,7 @@ typedef int8_t enc_step; // step is -1 or 1, or 0 if empty
  * @brief Initialize the with the corresponding channel pins
  * @return True if successful, false if not
  **/
-bool encoderInit(pin_t chnA, pin_t chnB);
+bool encoderInit();
 
 /**
  * @brief Pop an event from the encoder event queue. Queue is circular with max ENC_MAX_PENDING_EVENTS, otherwise

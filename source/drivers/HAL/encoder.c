@@ -1,5 +1,5 @@
 #include "include/encoder.h"
-#include "../../application/include/board.h"
+#include "include/board.h"
 #include "../MCAL/include/gpio.h"
 static enc_channels channel_pins; // to keep them somewhere
 
@@ -13,11 +13,11 @@ static void encPushEvent(EncoderDir dir);
 
 pisr_callback_t encPisr(void);
 
-bool encoderInit(pin_t chnA, pin_t chnB) {
-	channel_pins.channelA = chnA;
-	channel_pins.channelB = chnB;
-	gpioMode(chnA, INPUT_PULLUP); // theres already a pullup but oh well
-	gpioMode(chnB, INPUT_PULLUP);
+bool encoderInit() {
+	channel_pins.channelA = PIN_ENC_CHNA;
+	channel_pins.channelB = PIN_ENC_CHNB;
+	gpioMode(channel_pins.channelA, INPUT_PULLUP); // theres already a pullup but oh well
+	gpioMode(channel_pins.channelB, INPUT_PULLUP);
 	_head = 0;
 	_tail = 0;
 	return pisrRegister((pisr_callback_t) encPisr, ENC_PISR_PERIOD);

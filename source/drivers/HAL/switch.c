@@ -40,10 +40,10 @@ static uint8_t sw_count = 0;
 static void swPushEvent(swEvent ev);
 static void swProcessSwitch(uint8_t i);
 
-void swPisr(void);
+pisr_callback_t swPisr(void);
 
 void swInit() {
-	pisrRegister(swPisr, 1);
+	pisrRegister((pisr_callback_t) swPisr, 1);
 }
 sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	if (sw_count >= SW_MAX_SWS)
@@ -84,8 +84,7 @@ swEvent swPopEvent(void) {
 	return ret;
 }
 
-void swPisr(void) /* match pisr_callback_t  */
-{
+pisr_callback_t swPisr(void) {
 	for (uint8_t i = 0; i < sw_count; i++)
 		if (config[i].registered)
 			swProcessSwitch(i);
@@ -99,6 +98,24 @@ static void swPushEvent(swEvent ev) {
 	_head = next;
 }
 
+/***
+ *
+ * STM FLOW:
+Idle > Debounce : active signal? start the 20ms debounce timer
+Debounce > Idle : signal drops before 20ms, just debounce ->reset
+Debounce > Pressed : confirmed press, start 800ms long-click timer
+Pressed > Released : if  released before 800ms, start 300ms double-click timer
+Pressed > Wait release : 800ms expires while held , emit long click, wait for actual release
+Released > Pressed 2 : second press inside 300ms window
+Released > Idle : 300ms expires with no second press, emit click
+Pressed 2 > Idle : released before 800ms , emit double click
+Pressed 2 > Wait release ; held 800ms on second press → emit long click
+Wait release > Idle ; button physically released, clean return to idle
+ *
+Problem: if i do a double click and second click is too long , it will be taken as a long click only -> @todo solve
+by incrementing long click window to avoid triggering that case accidentally
+ *
+ */
 static void swProcessSwitch(uint8_t i) {
 	uint8_t current = gpioRead(config[i].pin);
 	bool active = ISACTIVE(current, config[i].active_on);
