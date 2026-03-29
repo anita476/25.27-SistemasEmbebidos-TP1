@@ -10,6 +10,7 @@
 #include "../../SDK/CMSIS/fsl_device_registers.h"
 #include "../drivers/HAL/include/MC74HC139.h"
 #include "../drivers/HAL/include/board.h"
+#include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
@@ -39,6 +40,7 @@ void App_Init(void) {
 	encoderInit();
 	MC74HC139Init(MC74HC139_DEV_U1B);
 	MC74HC139Select(MC74HC139_DEV_U1B, STATUS_LED_NONE);
+	displayInit();
 
 	sw_handle_t btn1 = swRegister(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
 	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
@@ -61,21 +63,23 @@ void App_Run(void) {
 
 	while (1) {
 		timerUpdate(); /* must be called every iteration  @todo ask if this is ok*/
-
 		swEvent ev = swPopEvent();
 		switch (ev.event_type) {
 			case SW_EVENT_CLICK:
 				printf("Pin %d -> CLICK\n", ev.swPin);
 				MC74HC139Select(MC74HC139_DEV_U1B, STATUS_LED_D1);
+				writeToDigit(0, SEG7_CHAR('A'));
 				break;
 			case SW_EVENT_DOUBLE_CLICK:
 				printf("Pin %d -> DOUBLE CLICK\n", ev.swPin);
 				MC74HC139Select(MC74HC139_DEV_U1B, STATUS_LED_D2);
+				writeToDigit(1, SEG7_CHAR('L'));
 
 				break;
 			case SW_EVENT_LONG_CLICK:
 				printf("Pin %d -> LONG CLICK\n", ev.swPin);
 				MC74HC139Select(MC74HC139_DEV_U1B, STATUS_LED_D3);
+				writeToDigit(2, SEG7_CHAR('D'));
 
 				break;
 			case SW_EVENT_NONE:

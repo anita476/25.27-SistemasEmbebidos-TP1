@@ -17,8 +17,8 @@ static Decoder_t decoders[MC74HC139_DEV_COUNT];
 bool MC74HC139Init(MC74HC139_Dec_t type) {
 	switch (type) {
 		case MC74HC139_DEV_U1A:
-			decoders[MC74HC139_DEV_U1A].pinA = PIN_U1A_SEL0;
-			decoders[MC74HC139_DEV_U1A].pinB = PIN_U1A_SEL1;
+			decoders[MC74HC139_DEV_U1A].pinA = PIN_U1A_SEL1;
+			decoders[MC74HC139_DEV_U1A].pinB = PIN_U1A_SEL0;
 			gpioMode(PIN_U1A_SEL1, OUTPUT);
 			gpioMode(PIN_U1A_SEL0, OUTPUT);
 			gpioWrite(PIN_U1A_SEL0, !DEC_ACTIVE);
