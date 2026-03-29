@@ -29,14 +29,19 @@
 #define PIN_SW2 PORTNUM2PIN(PC, 6) // PTC6
 #define PIN_SW3 PORTNUM2PIN(PA, 4) // PTA4
 
-// Channel pins for encoder
+// Channel & switch pins for encoder
 #define PIN_ENC_CHNA PORTNUM2PIN(PC, 5)
 #define PIN_ENC_CHNB PORTNUM2PIN(PC, 3)
-
 #define PIN_SW_ENC PORTNUM2PIN(PB, 23)
-// Encoder board leds
-// #define PIN_ENC_LED1
-// #define PIN_ENC_LED2
+
+// DEnc board status leds encoder pins
+#define PIN_U1B_STATUS0
+#define PIN_U1B_STATUS1
+#define ST_ACTIVE LOW
+
+// DEnc board digit display pins
+#define PIN_U1A_SEL0
+#define PIN_U1A_SEL1
 
 #define SW_ACTIVE LOW
 #define SW_INPUT_TYPE INPUT_PULLUP // en realidad para sw3 no hace falta, para sw2 SI
