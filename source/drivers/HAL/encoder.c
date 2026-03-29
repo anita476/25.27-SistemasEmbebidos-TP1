@@ -3,13 +3,13 @@
 #include "../MCAL/include/gpio.h"
 static enc_channels channel_pins; // to keep them somewhere
 
-static EncoderDir queue[MAX_PENDING_EVENTS];
+static EncoderDir queue[ENC_MAX_PENDING_EVENTS];
 static volatile uint8_t _head = 0; // newst the ISR writes here
 static volatile uint8_t _tail = 0; // oldest , the app will read from here -> 0 a MAX_PENDING -1
 
 static uint8_t previous;
 
-static void pushEvent(EncoderDir dir);
+static void encPushEvent(EncoderDir dir);
 
 pisr_callback_t encPisr(void);
 
@@ -23,12 +23,12 @@ bool encoderInit(pin_t chnA, pin_t chnB) {
 	return pisrRegister((pisr_callback_t) encPisr, ENC_PISR_PERIOD);
 }
 
-enc_step popEvent() {
+enc_step encPopEvent() {
 	if (_head == _tail) {
 		return ENC_NONE;
 	}
 	EncoderDir dir = queue[_tail];
-	_tail = (_tail + 1) & (MAX_PENDING_EVENTS - 1); // add 1 and & only if _tail is the last possible one
+	_tail = (_tail + 1) & (ENC_MAX_PENDING_EVENTS - 1); // add 1 and & only if _tail is the last possible one
 	return dir;
 }
 /**
@@ -58,10 +58,10 @@ pisr_callback_t encPisr(void) {
 	uint8_t index = (previous << 2) | current;
 	switch (index) {
 		case 0b1110: //
-			pushEvent(ENC_CW);
+			encPushEvent(ENC_CW);
 			break;
 		case 0b1101:
-			pushEvent(ENC_CCW);
+			encPushEvent(ENC_CCW);
 			break;
 		default:
 			break;
@@ -70,8 +70,8 @@ pisr_callback_t encPisr(void) {
 	previous = current;
 }
 
-static void pushEvent(EncoderDir dir) {
-	uint8_t next = (_head + 1u) & (MAX_PENDING_EVENTS - 1u); // if full, then go to start
+static void encPushEvent(EncoderDir dir) {
+	uint8_t next = (_head + 1u) & (ENC_MAX_PENDING_EVENTS - 1u); // if full, then go to start
 
 	if (next == _tail) // if we caught up to the tail, events were never consumed!!
 		return;		   // drop events if queue is full

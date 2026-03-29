@@ -39,7 +39,7 @@ void App_Init(void) {
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
 	EncoderDir ev;
-	while ((ev = popEvent()) != ENC_NONE) { // pop all in the queue
+	while ((ev = encPopEvent()) != ENC_NONE) { // pop all in the queue
 		if (ev == ENC_CCW) {
 			/**
 			 * Obs!! For printf must enable semihosting:

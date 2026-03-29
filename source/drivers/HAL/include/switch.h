@@ -1,0 +1,49 @@
+#ifndef _SWITCH_H_
+#define _SWITCH_H_
+
+#include "../../MCAL/include/gpio.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#define SW_PISR_PERIOD 1 // in ticks -> @todo i think 125ms per tick is much too slow -> maybe not
+
+#define SW_MAX_PENDING_EVENTS 32
+#define SW_MAX_SWS 8		  // max switches that can be registered
+#define INVALID_SW_HANDLE 255 // idem timer....
+
+#define SW_DBC_MS
+typedef uint8_t sw_handle_t;
+typedef enum : uint8_t { SW_EVENT_NONE = 0, SW_EVENT_CLICK, SW_EVENT_DOUBLE_CLICK, SW_EVENT_LONG_CLICK } swEventType;
+// @todo this is ugly ...
+typedef enum { ACTIVE_ON_LOW = LOW, ACTIVE_ON_HIGH = HIGH } ACTIVE_ON;
+typedef enum { PULL_NONE = 0, PULL_DOWN, PULL_UP } PULL;
+
+typedef struct {
+	uint8_t swPin;
+	swEventType event_type;
+} swEvent;
+
+/**
+ * @brief Register a switch with the corresponding pin,
+ * @return True if successful, false if not
+ * @param pin Absolute mcu pin for switch
+ * @param active_i¿on Active on low or high
+ **/
+sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_on);
+
+/**
+ * @brief Unregister a switch
+ * @param handle Switch handle, delivered at registration
+ */
+void swUnregister(sw_handle_t handle);
+
+/**
+ * @brief Pop an event from the switch event queue. Queue is circular with max SW_MAX_PENDING_EVENTS, otherwise
+ * overwrites
+ * @todo preguntar sobre la queue ciruclar
+ * @returns A switch event, containing the event type and the sw pin that triggered it
+ */
+swEvent swPopEvent();
+
+#endif // _SWITCH_H_
