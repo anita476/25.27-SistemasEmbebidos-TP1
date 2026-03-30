@@ -1,17 +1,17 @@
 #include "include/encoder.h"
 #include "../MCAL/include/gpio.h"
 #include "include/board.h"
-static enc_channels channel_pins; // to keep them somewhere
+static encChannels channel_pins; // to keep them somewhere
 
-static EncoderDir queue[ENC_MAX_PENDING_EVENTS];
+static encoderDir queue[ENC_MAX_PENDING_EVENTS];
 static volatile uint8_t _head = 0; // newst the ISR writes here
 static volatile uint8_t _tail = 0; // oldest , the app will read from here -> 0 a MAX_PENDING -1
 
 static uint8_t previous;
 
-static void _encoder_drv_push_event(EncoderDir dir);
+static void _encoder_drv_push_event(encoderDir dir);
 
-pisr_callback_t encoder_drv_PISR(void);
+pisrCallbackPtr_t encoder_drv_PISR(void);
 
 bool encoder_drv_init() {
 	channel_pins.channelA = PIN_ENC_CHNA;
@@ -20,14 +20,14 @@ bool encoder_drv_init() {
 	gpio_drv_mode(channel_pins.channelB, INPUT_PULLUP);
 	_head = 0;
 	_tail = 0;
-	return pisr_drv_register((pisr_callback_t) encoder_drv_PISR, ENC_PISR_PERIOD);
+	return pisr_drv_register((pisrCallbackPtr_t) encoder_drv_PISR, ENC_PISR_PERIOD);
 }
 
-enc_step encoder_drv_pop_event() {
+encStep_t encoder_drv_pop_event() {
 	if (_head == _tail) {
 		return ENC_NONE;
 	}
-	EncoderDir dir = queue[_tail];
+	encoderDir dir = queue[_tail];
 	_tail = (_tail + 1) & (ENC_MAX_PENDING_EVENTS - 1); // add 1 and & only if _tail is the last possible one
 	return dir;
 }
@@ -53,7 +53,7 @@ enc_step encoder_drv_pop_event() {
  *
  */
 
-pisr_callback_t encoder_drv_PISR(void) {
+pisrCallbackPtr_t encoder_drv_PISR(void) {
 	uint8_t current = (gpio_drv_read(channel_pins.channelA) << 1) | gpio_drv_read(channel_pins.channelB);
 	uint8_t index = (previous << 2) | current;
 	switch (index) {
@@ -70,7 +70,7 @@ pisr_callback_t encoder_drv_PISR(void) {
 	previous = current;
 }
 
-static void _encoder_drv_push_event(EncoderDir dir) {
+static void _encoder_drv_push_event(encoderDir dir) {
 	uint8_t next = (_head + 1u) & (ENC_MAX_PENDING_EVENTS - 1u); // if full, then go to start
 
 	if (next == _tail) // if we caught up to the tail, events were never consumed!!

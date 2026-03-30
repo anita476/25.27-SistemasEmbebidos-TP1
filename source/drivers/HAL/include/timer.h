@@ -34,9 +34,9 @@
 enum { TIM_MODE_SINGLESHOT, TIM_MODE_PERIODIC, CANT_TIM_MODES };
 
 // Timer alias
-typedef uint32_t tim_tick_t;
-typedef uint8_t tim_id_t;
-typedef void (*tim_callback_t)(void);
+typedef uint32_t timTick_t;
+typedef uint8_t timId_t;
+typedef void (*timCallback_t)(void);
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -55,7 +55,7 @@ void timer_drv_init(void);
  * @brief Request an timer
  * @return ID of the timer to use
  */
-tim_id_t timer_drv_get_id(void);
+timId_t timer_drv_get_id(void);
 
 /**
  * @brief Begin to run a new timer
@@ -65,20 +65,20 @@ tim_id_t timer_drv_get_id(void);
  * @param callback Function to be call when timer expires (NULL if no necessary)
  * @return true = timer start succeed
  */
-bool timer_drv_start(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback);
+bool timer_drv_start(timId_t id, timTick_t ticks, uint8_t mode, timCallback_t callback);
 
 /**
  * @brief Finish to run a timer
  * @param id ID of the timer to stop
  */
-void timer_drv_stop(tim_id_t id);
+void timer_drv_stop(timId_t id);
 
 /**
  * @brief Verify if a timer has run timeout
  * @param id ID of the timer to check for expiration
  * @return true = timer expired
  */
-bool timer_drv_expired(tim_id_t id);
+bool timer_drv_expired(timId_t id);
 
 /**
  * @brief Call respective callbacks if timeout ocurrs. Must be call from main loop.
@@ -90,7 +90,7 @@ void timer_drv_update(void);
  * one.
  * @param id Id of the timer to delete
  */
-void timer_drv_delete(tim_id_t id);
+void timer_drv_delete(timId_t id);
 
 /*******************************************************************************
  ******************************************************************************/

@@ -53,7 +53,7 @@ void App_Init(void) {
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
-	EncoderDir enc_ev;
+	encoderDir enc_ev;
 	/**
 	 * Obs!! For printf must enable semihosting:
 	 * Set to RedLink (-semihosting) in:

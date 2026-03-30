@@ -24,7 +24,7 @@ typedef enum {
 
 typedef struct {
 	swState_t state;
-	tim_id_t timer;
+	timId_t timer;
 } swContext_t;
 
 typedef struct {
@@ -40,16 +40,16 @@ static uint8_t sw_count = 0;
 static void _switch_drv_push_event(swEvent ev);
 static void _switch_drv_process_event(uint8_t i);
 
-pisr_callback_t switch_drv_PISR(void);
+pisrCallbackPtr_t switch_drv_PISR(void);
 
 void switch_drv_init() {
-	pisr_drv_register((pisr_callback_t) switch_drv_PISR, 1);
+	pisr_drv_register((pisrCallbackPtr_t) switch_drv_PISR, 1);
 }
 sw_handle_t switch_drv_register(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	if (sw_count >= SW_MAX_SWS)
 		return INVALID_SW_HANDLE;
 
-	tim_id_t tim = timer_drv_get_id();
+	timId_t tim = timer_drv_get_id();
 	if (tim == TIMER_INVALID_ID)
 		return INVALID_SW_HANDLE;
 
@@ -84,7 +84,7 @@ swEvent switch_drv_pop_event(void) {
 	return ret;
 }
 
-pisr_callback_t switch_drv_PISR(void) {
+pisrCallbackPtr_t switch_drv_PISR(void) {
 	for (uint8_t i = 0; i < sw_count; i++)
 		if (config[i].registered)
 			_switch_drv_process_event(i);

@@ -10,11 +10,11 @@ typedef struct {
 	bool initialized;
 	pin_t pinA;
 	pin_t pinB;
-} Decoder_t;
+} decoderType;
 
-static Decoder_t decoders[MC74HC139_DEV_COUNT];
+static decoderType decoders[MC74HC139_DEV_COUNT];
 
-bool MC74HC139_drv_init(MC74HC139_Dec_t type) {
+bool MC74HC139_drv_init(MC74HC139Dec_t type) {
 	switch (type) {
 		case MC74HC139_DEV_U1A:
 			decoders[MC74HC139_DEV_U1A].pinA = PIN_U1A_SEL1;
@@ -40,7 +40,7 @@ bool MC74HC139_drv_init(MC74HC139_Dec_t type) {
 	}
 }
 
-void MC74HC139_drv_select(MC74HC139_Dec_t type, MC74HC139_Out_t output) {
+void MC74HC139_drv_select(MC74HC139Dec_t type, MC74HC139Out_t output) {
 	if (type >= MC74HC139_DEV_COUNT || !decoders[type].initialized)
 		return;
 

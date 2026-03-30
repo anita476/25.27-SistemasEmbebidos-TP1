@@ -56,14 +56,14 @@ typedef enum {
 typedef struct {
 	pin_t pin;
 	pinIrqFun_t callback_fn;
-} gpio_pin_callback;
+} gpioPinCallback_t;
 
 typedef struct {
 	uint32_t used; // counter to track # of used callbacks
-	gpio_pin_callback callbacks[MAX_CBCKS_PORT];
-} gpio_port_callbacks;
+	gpioPinCallback_t callbacks[MAX_CBCKS_PORT];
+} gpioPortCallbacks_t;
 
-static gpio_port_callbacks irqCallbacks[PORT_NUM]; // here we will store the callback
+static gpioPortCallbacks_t irqCallbacks[PORT_NUM]; // here we will store the callback
 
 static void _execute_callbacks(int port);
 

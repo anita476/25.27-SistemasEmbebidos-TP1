@@ -6,17 +6,17 @@ static unsigned int ticks;
 
 typedef struct {
 	unsigned int period;
-	pisr_callback_t callback;
-} callback;
+	pisrCallbackPtr_t callback;
+} pisrCallback_t;
 
 typedef struct {
-	callback callbacks[PISR_CANT];
+	pisrCallback_t callbacks[PISR_CANT];
 	int used_irqs;
 	int max_period;
 } pisrType;
 static pisrType pIrqs;
 
-bool pisr_drv_register(pisr_callback_t fun, unsigned int period) {
+bool pisr_drv_register(pisrCallbackPtr_t fun, unsigned int period) {
 	if (pIrqs.used_irqs >= PISR_CANT) {
 		return false;
 	}

@@ -28,7 +28,7 @@
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS
  ******************************************************************************/
 
-typedef void (*pisr_callback_t)(void);
+typedef void (*pisrCallbackPtr_t)(void);
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -44,7 +44,7 @@ typedef void (*pisr_callback_t)(void);
  * @param period PISR period in ticks
  * @return Registration succeed
  */
-bool pisr_drv_register(pisr_callback_t fun, unsigned int period);
+bool pisr_drv_register(pisrCallbackPtr_t fun, unsigned int period);
 
 /*******************************************************************************
  ******************************************************************************/

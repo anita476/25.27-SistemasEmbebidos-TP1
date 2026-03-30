@@ -19,14 +19,14 @@ typedef enum : int8_t {
 	ENC_CCW = -1,
 	ENC_NONE = 0,
 	ENC_CW = +1,
-} EncoderDir;
+} encoderDir;
 
 typedef struct {
 	pin_t channelA; // Obs! absolute mcu pins
 	pin_t channelB;
-} enc_channels;
+} encChannels;
 
-typedef int8_t enc_step; // step is -1 or 1, or 0 if empty
+typedef int8_t encStep_t; // step is -1 or 1, or 0 if empty
 
 /**
  * @brief Initialize the with the corresponding channel pins
@@ -40,6 +40,6 @@ bool encoder_drv_init();
  * @todo preguntar sobre la queue ciruclar
  * @returns 1 for a clockwise step, -1 for counter clockwise. Returns 0 if queue is empty.
  */
-enc_step encoder_drv_pop_event();
+encStep_t encoder_drv_pop_event();
 
 #endif /* DRIVERS_HAL_ENCODER_H_ */
