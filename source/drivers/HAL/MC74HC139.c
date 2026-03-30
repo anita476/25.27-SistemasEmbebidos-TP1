@@ -14,24 +14,24 @@ typedef struct {
 
 static Decoder_t decoders[MC74HC139_DEV_COUNT];
 
-bool MC74HC139Init(MC74HC139_Dec_t type) {
+bool MC74HC139_drv_init(MC74HC139_Dec_t type) {
 	switch (type) {
 		case MC74HC139_DEV_U1A:
 			decoders[MC74HC139_DEV_U1A].pinA = PIN_U1A_SEL1;
 			decoders[MC74HC139_DEV_U1A].pinB = PIN_U1A_SEL0;
-			gpioMode(PIN_U1A_SEL1, OUTPUT);
-			gpioMode(PIN_U1A_SEL0, OUTPUT);
-			gpioWrite(PIN_U1A_SEL0, !DEC_ACTIVE);
-			gpioWrite(PIN_U1A_SEL1, !DEC_ACTIVE);
+			gpio_drv_mode(PIN_U1A_SEL1, OUTPUT);
+			gpio_drv_mode(PIN_U1A_SEL0, OUTPUT);
+			gpio_drv_write(PIN_U1A_SEL0, !DEC_ACTIVE);
+			gpio_drv_write(PIN_U1A_SEL1, !DEC_ACTIVE);
 			decoders[MC74HC139_DEV_U1A].initialized = true;
 			return true;
 		case MC74HC139_DEV_U1B:
 			decoders[MC74HC139_DEV_U1B].pinA = PIN_U1B_STATUS0;
 			decoders[MC74HC139_DEV_U1B].pinB = PIN_U1B_STATUS1;
-			gpioMode(PIN_U1B_STATUS0, OUTPUT);
-			gpioMode(PIN_U1B_STATUS1, OUTPUT);
-			gpioWrite(PIN_U1B_STATUS0, !DEC_ACTIVE);
-			gpioWrite(PIN_U1B_STATUS1, !DEC_ACTIVE);
+			gpio_drv_mode(PIN_U1B_STATUS0, OUTPUT);
+			gpio_drv_mode(PIN_U1B_STATUS1, OUTPUT);
+			gpio_drv_write(PIN_U1B_STATUS0, !DEC_ACTIVE);
+			gpio_drv_write(PIN_U1B_STATUS1, !DEC_ACTIVE);
 			decoders[MC74HC139_DEV_U1B].initialized = true;
 
 			return true;
@@ -40,12 +40,12 @@ bool MC74HC139Init(MC74HC139_Dec_t type) {
 	}
 }
 
-void MC74HC139Select(MC74HC139_Dec_t type, MC74HC139_Out_t output) {
+void MC74HC139_drv_select(MC74HC139_Dec_t type, MC74HC139_Out_t output) {
 	if (type >= MC74HC139_DEV_COUNT || !decoders[type].initialized)
 		return;
 
 	uint8_t a = (output >> 1) & 0x01; // bit1 is  STATUS0
 	uint8_t b = (output >> 0) & 0x01;
-	gpioWrite(decoders[type].pinA, a);
-	gpioWrite(decoders[type].pinB, b);
+	gpio_drv_write(decoders[type].pinA, a);
+	gpio_drv_write(decoders[type].pinB, b);
 }

@@ -41,7 +41,7 @@ typedef enum {
  * @param MC74HC139_Dec_t Which decoder to initialize
  * @returns true is successfull, false if not
  */
-bool MC74HC139Init(MC74HC139_Dec_t type);
+bool MC74HC139_drv_init(MC74HC139_Dec_t type);
 
 /**
  * @brief Select one of the four outputs.
@@ -49,6 +49,6 @@ bool MC74HC139Init(MC74HC139_Dec_t type);
  * @param dev    Pointer to decoder instance
  * @param output One of the outputs (Y0 to Y3)
  */
-void MC74HC139Select(MC74HC139_Dec_t type, MC74HC139_Out_t output);
+void MC74HC139_drv_select(MC74HC139_Dec_t type, MC74HC139_Out_t output);
 
 #endif /* _MC74HC139_H */

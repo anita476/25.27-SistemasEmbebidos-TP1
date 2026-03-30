@@ -73,7 +73,7 @@ typedef void (*pinIrqFun_t)(void);
  * @param pin the pin whose mode you wish to set (according PORTNUM2PIN)
  * @param mode INPUT, OUTPUT, INPUT_PULLUP or INPUT_PULLDOWN.
  */
-void gpioMode(pin_t pin, uint8_t mode);
+void gpio_drv_mode(pin_t pin, uint8_t mode);
 
 /**
  * @brief Configures how the pin reacts when an IRQ event ocurrs
@@ -83,27 +83,27 @@ void gpioMode(pin_t pin, uint8_t mode);
  * @return Registration succeed
  * @note Port interrupts already clear pin isr before callback
  */
-bool gpioIRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun);
+bool gpio_drv_IRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun);
 
 /**
  * @brief Write a HIGH or a LOW value to a digital pin
  * @param pin the pin to write (according PORTNUM2PIN)
  * @param val Desired value (HIGH or LOW)
  */
-void gpioWrite(pin_t pin, bool value);
+void gpio_drv_write(pin_t pin, bool value);
 
 /**
  * @brief Toggle the value of a digital pin (HIGH<->LOW)
  * @param pin the pin to toggle (according PORTNUM2PIN)
  */
-void gpioToggle(pin_t pin);
+void gpio_drv_toggle(pin_t pin);
 
 /**
  * @brief Reads the value from a specified digital pin, either HIGH or LOW.
  * @param pin the pin to read (according PORTNUM2PIN)
  * @return HIGH or LOW
  */
-bool gpioRead(pin_t pin);
+bool gpio_drv_read(pin_t pin);
 
 /*******************************************************************************
  ******************************************************************************/

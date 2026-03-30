@@ -32,7 +32,7 @@ typedef int8_t enc_step; // step is -1 or 1, or 0 if empty
  * @brief Initialize the with the corresponding channel pins
  * @return True if successful, false if not
  **/
-bool encoderInit();
+bool encoder_drv_init();
 
 /**
  * @brief Pop an event from the encoder event queue. Queue is circular with max ENC_MAX_PENDING_EVENTS, otherwise
@@ -40,6 +40,6 @@ bool encoderInit();
  * @todo preguntar sobre la queue ciruclar
  * @returns 1 for a clockwise step, -1 for counter clockwise. Returns 0 if queue is empty.
  */
-enc_step encPopEvent();
+enc_step encoder_drv_pop_event();
 
 #endif /* DRIVERS_HAL_ENCODER_H_ */

@@ -27,7 +27,7 @@ typedef struct {
 /**
  * @brief Initialize the switch driver
  */
-void swInit();
+void switch_drv_init();
 /**
  * @brief Register a switch with the corresponding pin,
  * @return True if successful, false if not
@@ -35,12 +35,12 @@ void swInit();
  * @param active_i¿on Active on low or high
  * @param pullconfig Pull configuration
  **/
-sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig);
+sw_handle_t switch_drv_register(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig);
 /**
  * @brief Unregister a switch
  * @param handle Switch handle, delivered at registration
  */
-void swUnregister(sw_handle_t handle);
+void switch_drv_unregister(sw_handle_t handle);
 
 /**
  * @brief Pop an event from the switch event queue. Queue is circular with max SW_MAX_PENDING_EVENTS, otherwise
@@ -48,6 +48,6 @@ void swUnregister(sw_handle_t handle);
  * @todo preguntar sobre la queue ciruclar
  * @returns A switch event, containing the event type and the sw pin that triggered it
  */
-swEvent swPopEvent();
+swEvent switch_drv_pop_event();
 
 #endif // _SWITCH_H_

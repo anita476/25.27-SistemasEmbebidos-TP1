@@ -65,9 +65,9 @@ typedef struct {
 
 static gpio_port_callbacks irqCallbacks[PORT_NUM]; // here we will store the callback
 
-static void execute_callbacks(int port);
+static void _execute_callbacks(int port);
 
-void gpioMode(pin_t pin, uint8_t mode) {
+void gpio_drv_mode(pin_t pin, uint8_t mode) {
 	int port_num = PIN2PORT(pin);
 	int port_pin_num = PIN2NUM(pin);
 	/*
@@ -108,7 +108,7 @@ void gpioMode(pin_t pin, uint8_t mode) {
 /* Obs! Remember that PSOR only SETS bits. To write a 0 we need to use PCOR
  *  PSOR/PCOR/PTOR are write only , so the |= is not needed, only = is fine
  */
-void gpioWrite(pin_t pin, bool value) {
+void gpio_drv_write(pin_t pin, bool value) {
 	int port_num = PIN2PORT(pin);
 	int port_pin_num = PIN2NUM(pin);
 
@@ -122,13 +122,13 @@ void gpioWrite(pin_t pin, bool value) {
 	}
 }
 
-void gpioToggle(pin_t pin) {
+void gpio_drv_toggle(pin_t pin) {
 	if (gpio_ptrs[PIN2PORT(pin)]->PDDR & (1 << PIN2NUM(pin))) {
 		gpio_ptrs[PIN2PORT(pin)]->PTOR = (1 << PIN2NUM(pin));
 	}
 }
 
-bool gpioRead(pin_t pin) {
+bool gpio_drv_read(pin_t pin) {
 	return (gpio_ptrs[PIN2PORT(pin)]->PDIR >> PIN2NUM(pin)) & 1u;
 }
 
@@ -137,7 +137,7 @@ Obs! We need to store the callbacks for each pin
 2 approaches -> either store a full matrix with access via index por each PORT-PIN
 						-> or store a maximum array of structures that contain each PIN+CALLBACK
  */
-bool gpioIRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun) {
+bool gpio_drv_IRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun) {
 	int port = PIN2PORT(pin);
 	int portPin = PIN2NUM(pin);
 	if (irqCallbacks[port].used >= MAX_CBCKS_PORT) {
@@ -158,22 +158,22 @@ bool gpioIRQ(pin_t pin, uint8_t irqMode, pinIrqFun_t irqFun) {
 }
 
 void PORTA_IRQHandler(void) {
-	execute_callbacks(PA);
+	_execute_callbacks(PA);
 }
 void PORTB_IRQHandler(void) {
-	execute_callbacks(PB);
+	_execute_callbacks(PB);
 }
 void PORTC_IRQHandler(void) {
-	execute_callbacks(PC);
+	_execute_callbacks(PC);
 }
 void PORTD_IRQHandler(void) {
-	execute_callbacks(PD);
+	_execute_callbacks(PD);
 }
 void PORTE_IRQHandler(void) {
-	execute_callbacks(PE);
+	_execute_callbacks(PE);
 }
 
-static void execute_callbacks(int port) {
+static void _execute_callbacks(int port) {
 	// Obs! In this case i dont need to cycle through the whole PORTX_ISFR, just checking the actual interrupts
 	// configured and checking isr is enough
 	int i = irqCallbacks[port].used;

@@ -49,13 +49,13 @@ typedef void (*tim_callback_t)(void);
 /**
  * @brief Initialice timer and corresponding peripheral
  */
-void timerInit(void);
+void timer_drv_init(void);
 
 /**
  * @brief Request an timer
  * @return ID of the timer to use
  */
-tim_id_t timerGetId(void);
+tim_id_t timer_drv_get_id(void);
 
 /**
  * @brief Begin to run a new timer
@@ -65,32 +65,32 @@ tim_id_t timerGetId(void);
  * @param callback Function to be call when timer expires (NULL if no necessary)
  * @return true = timer start succeed
  */
-bool timerStart(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback);
+bool timer_drv_start(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback);
 
 /**
  * @brief Finish to run a timer
  * @param id ID of the timer to stop
  */
-void timerStop(tim_id_t id);
+void timer_drv_stop(tim_id_t id);
 
 /**
  * @brief Verify if a timer has run timeout
  * @param id ID of the timer to check for expiration
  * @return true = timer expired
  */
-bool timerExpired(tim_id_t id);
+bool timer_drv_expired(tim_id_t id);
 
 /**
  * @brief Call respective callbacks if timeout ocurrs. Must be call from main loop.
  */
-void timerUpdate(void);
+void timer_drv_update(void);
 
 /**
  * @brief Delete a timer (frees its space). Especially for period interrupts. To use another timer must request a new
  * one.
  * @param id Id of the timer to delete
  */
-void timerDelete(tim_id_t id);
+void timer_drv_delete(tim_id_t id);
 
 /*******************************************************************************
  ******************************************************************************/

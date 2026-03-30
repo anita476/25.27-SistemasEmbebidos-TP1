@@ -44,7 +44,7 @@ typedef void (*pisr_callback_t)(void);
  * @param period PISR period in ticks
  * @return Registration succeed
  */
-bool pisrRegister(pisr_callback_t fun, unsigned int period);
+bool pisr_drv_register(pisr_callback_t fun, unsigned int period);
 
 /*******************************************************************************
  ******************************************************************************/

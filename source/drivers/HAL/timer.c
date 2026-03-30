@@ -24,16 +24,16 @@ typedef struct {
 
 static timerType_t timers[TIMERS_MAX_CANT];
 
-static void timerPISR(void);
+static void timer_drv_PISR(void);
 
-void timerInit(void) {
+void timer_drv_init(void) {
 	for (int i = 0; i < TIMERS_MAX_CANT; i++)
 		timers[i].state = TIM_FREE;
 
-	pisrRegister(timerPISR, 1); /* no cast needed          */
+	pisr_drv_register(timer_drv_PISR, 1); /* no cast needed          */
 }
 
-tim_id_t timerGetId(void) {
+tim_id_t timer_drv_get_id(void) {
 	for (int i = 0; i < TIMERS_MAX_CANT; i++) {
 		if (timers[i].state == TIM_FREE) {
 			timers[i].state = TIM_OCCUPIED;
@@ -43,7 +43,7 @@ tim_id_t timerGetId(void) {
 	return TIMER_INVALID_ID;
 }
 
-bool timerStart(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback) {
+bool timer_drv_start(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t callback) {
 	if (id >= TIMERS_MAX_CANT)
 		return false;
 
@@ -59,23 +59,23 @@ bool timerStart(tim_id_t id, tim_tick_t ticks, uint8_t mode, tim_callback_t call
 	return true;
 }
 
-void timerStop(tim_id_t id) {
+void timer_drv_stop(tim_id_t id) {
 	if (id >= TIMERS_MAX_CANT)
 		return;
 	timers[id].callback = NULL;
 	timers[id].state = TIM_OCCUPIED;
 }
 
-bool timerExpired(tim_id_t id) {
+bool timer_drv_expired(tim_id_t id) {
 	if (id >= TIMERS_MAX_CANT || timers[id].state != TIM_EXPIRED)
 		return false;
 
-	/* reset to OCCUPIED — caller must timerStart again to reuse      */
+	/* reset to OCCUPIED — caller must timer_drv_start again to reuse      */
 	timers[id].state = TIM_OCCUPIED;
 	return true;
 }
 
-void timerUpdate(void) {
+void timer_drv_update(void) {
 	for (int i = 0; i < TIMERS_MAX_CANT; i++) {
 		if (timers[i].state != TIM_ACTIVE)
 			continue;
@@ -93,20 +93,20 @@ void timerUpdate(void) {
 				timers[i].state = TIM_ACTIVE;
 			}
 		} else if (timers[i].mode == TIM_MODE_PERIODIC) {
-			/* no callback, still reload for polling via timerExpired */
+			/* no callback, still reload for polling via timer_drv_expired */
 			timers[i].expires_at += timers[i].period;
 			timers[i].state = TIM_ACTIVE;
 		}
 	}
 }
 
-void timerDelete(tim_id_t id) {
+void timer_drv_delete(tim_id_t id) {
 	if (id >= TIMERS_MAX_CANT || timers[id].state == TIM_FREE)
 		return;
 	timers[id].callback = NULL;
 	timers[id].state = TIM_FREE;
 }
 
-static void timerPISR(void) {
+static void timer_drv_PISR(void) {
 	timer_tick++;
 }

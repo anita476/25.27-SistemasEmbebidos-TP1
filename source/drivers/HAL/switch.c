@@ -37,25 +37,25 @@ static swConfig_t config[SW_MAX_SWS];
 static swContext_t ctx[SW_MAX_SWS];
 static uint8_t sw_count = 0;
 
-static void swPushEvent(swEvent ev);
-static void swProcessSwitch(uint8_t i);
+static void _switch_drv_push_event(swEvent ev);
+static void _switch_drv_process_event(uint8_t i);
 
-pisr_callback_t swPisr(void);
+pisr_callback_t switch_drv_PISR(void);
 
-void swInit() {
-	pisrRegister((pisr_callback_t) swPisr, 1);
+void switch_drv_init() {
+	pisr_drv_register((pisr_callback_t) switch_drv_PISR, 1);
 }
-sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
+sw_handle_t switch_drv_register(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	if (sw_count >= SW_MAX_SWS)
 		return INVALID_SW_HANDLE;
 
-	tim_id_t tim = timerGetId();
+	tim_id_t tim = timer_drv_get_id();
 	if (tim == TIMER_INVALID_ID)
 		return INVALID_SW_HANDLE;
 
 	uint8_t handle = sw_count++;
 
-	gpioMode(pin, pullconfig == PULL_DOWN ? INPUT_PULLDOWN : pullconfig == PULL_UP ? INPUT_PULLUP : INPUT);
+	gpio_drv_mode(pin, pullconfig == PULL_DOWN ? INPUT_PULLDOWN : pullconfig == PULL_UP ? INPUT_PULLUP : INPUT);
 
 	config[handle].pin = pin;
 	config[handle].active_on = active_level;
@@ -67,15 +67,15 @@ sw_handle_t swRegister(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	return (sw_handle_t) handle;
 }
 
-void swUnregister(sw_handle_t handle) {
+void switch_drv_unregister(sw_handle_t handle) {
 	if (handle < 0 || handle >= SW_MAX_SWS)
 		return;
-	timerStop(ctx[handle].timer);
-	timerDelete(ctx[handle].timer);
+	timer_drv_stop(ctx[handle].timer);
+	timer_drv_delete(ctx[handle].timer);
 	config[handle].registered = false;
 }
 
-swEvent swPopEvent(void) {
+swEvent switch_drv_pop_event(void) {
 	swEvent ret = {.event_type = SW_EVENT_NONE, .swPin = 0};
 	if (_head == _tail)
 		return ret;
@@ -84,13 +84,13 @@ swEvent swPopEvent(void) {
 	return ret;
 }
 
-pisr_callback_t swPisr(void) {
+pisr_callback_t switch_drv_PISR(void) {
 	for (uint8_t i = 0; i < sw_count; i++)
 		if (config[i].registered)
-			swProcessSwitch(i);
+			_switch_drv_process_event(i);
 }
 
-static void swPushEvent(swEvent ev) {
+static void _switch_drv_push_event(swEvent ev) {
 	uint8_t next = (_head + 1u) & (SW_MAX_PENDING_EVENTS - 1u);
 	if (next == _tail)
 		return;
@@ -116,8 +116,8 @@ Problem: if i do a double click and second click is too long , it will be taken 
 by incrementing long click window to avoid triggering that case accidentally
  *
  */
-static void swProcessSwitch(uint8_t i) {
-	uint8_t current = gpioRead(config[i].pin);
+static void _switch_drv_process_event(uint8_t i) {
+	uint8_t current = gpio_drv_read(config[i].pin);
 	bool active = ISACTIVE(current, config[i].active_on);
 	swContext_t *c = &ctx[i];
 	swEvent ev = {.swPin = config[i].pin, .event_type = SW_EVENT_NONE};
@@ -125,39 +125,39 @@ static void swProcessSwitch(uint8_t i) {
 	switch (c->state) {
 		case SW_STATE_IDLE:
 			if (active) {
-				timerStart(c->timer, TIMER_MS2TICKS(DEBOUNCE_MS), TIM_MODE_SINGLESHOT, NULL);
+				timer_drv_start(c->timer, TIMER_MS2TICKS(DEBOUNCE_MS), TIM_MODE_SINGLESHOT, NULL);
 				c->state = SW_STATE_DEBOUNCE;
 			}
 			break;
 
 		case SW_STATE_DEBOUNCE:
 			if (!active) {
-				timerStop(c->timer);
+				timer_drv_stop(c->timer);
 				c->state = SW_STATE_IDLE;
-			} else if (timerExpired(c->timer)) {
-				timerStart(c->timer, TIMER_MS2TICKS(LONG_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
+			} else if (timer_drv_expired(c->timer)) {
+				timer_drv_start(c->timer, TIMER_MS2TICKS(LONG_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
 				c->state = SW_STATE_PRESSED;
 			}
 			break;
 
 		case SW_STATE_PRESSED:
 			if (!active) {
-				timerStart(c->timer, TIMER_MS2TICKS(DOUBLE_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
+				timer_drv_start(c->timer, TIMER_MS2TICKS(DOUBLE_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
 				c->state = SW_STATE_RELEASED;
-			} else if (timerExpired(c->timer)) {
+			} else if (timer_drv_expired(c->timer)) {
 				ev.event_type = SW_EVENT_LONG_CLICK;
-				swPushEvent(ev);
+				_switch_drv_push_event(ev);
 				c->state = SW_STATE_WAIT_RELEASE;
 			}
 			break;
 
 		case SW_STATE_RELEASED:
 			if (active) {
-				timerStart(c->timer, TIMER_MS2TICKS(LONG_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
+				timer_drv_start(c->timer, TIMER_MS2TICKS(LONG_CLICK_MS), TIM_MODE_SINGLESHOT, NULL);
 				c->state = SW_STATE_PRESSED_2;
-			} else if (timerExpired(c->timer)) {
+			} else if (timer_drv_expired(c->timer)) {
 				ev.event_type = SW_EVENT_CLICK;
-				swPushEvent(ev);
+				_switch_drv_push_event(ev);
 				c->state = SW_STATE_IDLE;
 			}
 			break;
@@ -165,11 +165,11 @@ static void swProcessSwitch(uint8_t i) {
 		case SW_STATE_PRESSED_2:
 			if (!active) {
 				ev.event_type = SW_EVENT_DOUBLE_CLICK;
-				swPushEvent(ev);
+				_switch_drv_push_event(ev);
 				c->state = SW_STATE_IDLE;
-			} else if (timerExpired(c->timer)) {
+			} else if (timer_drv_expired(c->timer)) {
 				ev.event_type = SW_EVENT_LONG_CLICK;
-				swPushEvent(ev);
+				_switch_drv_push_event(ev);
 				c->state = SW_STATE_WAIT_RELEASE;
 			}
 			break;

@@ -1,6 +1,6 @@
 #include "include/encoder.h"
-#include "include/board.h"
 #include "../MCAL/include/gpio.h"
+#include "include/board.h"
 static enc_channels channel_pins; // to keep them somewhere
 
 static EncoderDir queue[ENC_MAX_PENDING_EVENTS];
@@ -9,21 +9,21 @@ static volatile uint8_t _tail = 0; // oldest , the app will read from here -> 0 
 
 static uint8_t previous;
 
-static void encPushEvent(EncoderDir dir);
+static void _encoder_drv_push_event(EncoderDir dir);
 
-pisr_callback_t encPisr(void);
+pisr_callback_t encoder_drv_PISR(void);
 
-bool encoderInit() {
+bool encoder_drv_init() {
 	channel_pins.channelA = PIN_ENC_CHNA;
 	channel_pins.channelB = PIN_ENC_CHNB;
-	gpioMode(channel_pins.channelA, INPUT_PULLUP); // theres already a pullup but oh well
-	gpioMode(channel_pins.channelB, INPUT_PULLUP);
+	gpio_drv_mode(channel_pins.channelA, INPUT_PULLUP); // theres already a pullup but oh well
+	gpio_drv_mode(channel_pins.channelB, INPUT_PULLUP);
 	_head = 0;
 	_tail = 0;
-	return pisrRegister((pisr_callback_t) encPisr, ENC_PISR_PERIOD);
+	return pisr_drv_register((pisr_callback_t) encoder_drv_PISR, ENC_PISR_PERIOD);
 }
 
-enc_step encPopEvent() {
+enc_step encoder_drv_pop_event() {
 	if (_head == _tail) {
 		return ENC_NONE;
 	}
@@ -53,15 +53,15 @@ enc_step encPopEvent() {
  *
  */
 
-pisr_callback_t encPisr(void) {
-	uint8_t current = (gpioRead(channel_pins.channelA) << 1) | gpioRead(channel_pins.channelB);
+pisr_callback_t encoder_drv_PISR(void) {
+	uint8_t current = (gpio_drv_read(channel_pins.channelA) << 1) | gpio_drv_read(channel_pins.channelB);
 	uint8_t index = (previous << 2) | current;
 	switch (index) {
 		case 0b1110: //
-			encPushEvent(ENC_CW);
+			_encoder_drv_push_event(ENC_CW);
 			break;
 		case 0b1101:
-			encPushEvent(ENC_CCW);
+			_encoder_drv_push_event(ENC_CCW);
 			break;
 		default:
 			break;
@@ -70,7 +70,7 @@ pisr_callback_t encPisr(void) {
 	previous = current;
 }
 
-static void encPushEvent(EncoderDir dir) {
+static void _encoder_drv_push_event(EncoderDir dir) {
 	uint8_t next = (_head + 1u) & (ENC_MAX_PENDING_EVENTS - 1u); // if full, then go to start
 
 	if (next == _tail) // if we caught up to the tail, events were never consumed!!
