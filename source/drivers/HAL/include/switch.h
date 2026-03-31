@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SW_PISR_PERIOD 1 // in ticks -> @todo i think 125ms per tick is much too slow -> maybe not
+#define SW_PISR_PERIOD 5
 
 #define SW_MAX_PENDING_EVENTS 32
 #define SW_MAX_SWS 8		  // max switches that can be registered

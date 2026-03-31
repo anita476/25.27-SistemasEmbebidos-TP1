@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define DIG_NUM 4
+#define MAX_WD_SIZE 255
 
 /**
  * @brief Initialize display peripheral
@@ -19,5 +20,11 @@ bool display_drv_init();
  * @param code Symbol code (defined in font.h)
  */
 void display_drv_write_to_digit(uint32_t dig, uint8_t code);
+
+/*
+ * @brief Write word to display in digit starting with digit 0
+ */
+
+void display_drv_write_word(uint8_t new_word[DIG_NUM]);
 
 #endif /* _DISPLAY_H_ */

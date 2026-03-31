@@ -22,7 +22,7 @@
 
 #define PISR_CANT 8
 
-#define TICK_MS 5
+#define TICK_MS 1
 
 /*******************************************************************************
  * ENUMERATIONS AND STRUCTURES AND TYPEDEFS

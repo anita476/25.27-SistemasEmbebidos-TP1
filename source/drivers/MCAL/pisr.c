@@ -22,9 +22,9 @@ bool pisr_drv_register(pisrCallbackPtr_t fun, unsigned int period) {
 	}
 	if (!active) {
 		// if it wasnt, activate
-		SysTick->CTRL = 0x00;									 // reset everything
-		SysTick->LOAD = (TICK_MS * PISR_FREQUENCY_HZ * 100) - 1; // Changed it to every 5ms bc encoder needs it faster
-		SysTick->VAL = 0x00;									 // current value
+		SysTick->CTRL = 0x00; // reset everything
+		SysTick->LOAD = (TICK_MS * PISR_FREQUENCY_HZ * 100) - 1;
+		SysTick->VAL = 0x00; // current value
 		SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
 		active = true;
 	}

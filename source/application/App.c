@@ -54,6 +54,8 @@ void App_Init(void) {
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
 	encoderDir enc_ev;
+	uint8_t word[DIG_NUM] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
+	uint8_t nothing[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
 	/**
 	 * Obs!! For printf must enable semihosting:
 	 * Set to RedLink (-semihosting) in:
@@ -68,18 +70,20 @@ void App_Run(void) {
 			case SW_EVENT_CLICK:
 				printf("Pin %d -> CLICK\n", ev.swPin);
 				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D1);
-				display_drv_write_to_digit(0, SEG7_CHAR('A'));
+				// display_drv_write_to_digit(0, SEG7_CHAR('A'));
+				display_drv_write_word(word);
 				break;
 			case SW_EVENT_DOUBLE_CLICK:
 				printf("Pin %d -> DOUBLE CLICK\n", ev.swPin);
 				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D2);
-				display_drv_write_to_digit(1, SEG7_CHAR('L'));
+				// display_drv_write_to_digit(1, SEG7_CHAR('L'));
 
 				break;
 			case SW_EVENT_LONG_CLICK:
 				printf("Pin %d -> LONG CLICK\n", ev.swPin);
 				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D3);
-				display_drv_write_to_digit(2, SEG7_CHAR('D'));
+				display_drv_write_word(nothing);
+				// display_drv_write_to_digit(2, SEG7_CHAR('D'));
 
 				break;
 			case SW_EVENT_NONE:
