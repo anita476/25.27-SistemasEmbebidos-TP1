@@ -6,9 +6,7 @@
 #include <stdint.h>
 
 #define DIG_NUM 4
-
 #define MAX_WORD_LEN 254
-#define SCROLL_TICKS 30
 
 /**
  * @brief Initialize display peripheral
