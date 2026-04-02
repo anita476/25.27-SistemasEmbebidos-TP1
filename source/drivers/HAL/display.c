@@ -4,17 +4,25 @@
 #include "include/board.h"
 #include "include/shift_register.h"
 
-#define DISPLAY_TICKS 5
+#define PISR_TICKS 1	// 1 ms bc thats the smallest int possible
+#define DISPLAY_TICKS 5 // actual display logic will be every 5ms
+
 #define SCROLL_TICKS 30
 
 // padding is so that we start blank, then the scroll, and then theres 4 blank digits until restarting the scroll, it
 // looks better
 static uint8_t word_buf[DIG_NUM + MAX_WORD_LEN + DIG_NUM];
+static volatile uint8_t display_counter;
 static uint8_t word_len;
 static uint8_t scroll_offset; // current start index
 static uint8_t scroll_total;
 static uint8_t scroll_tick; // counts PISR calls between scroll steps, max is SCROLL_TICKS
 static bool scrolling;
+
+/****** for intensity  */
+static volatile uint8_t intensity;
+static volatile uint8_t curr_int_counter;
+static volatile uint8_t pwm_counter;
 
 static uint8_t visible[DIG_NUM]; //  bytes currently on screen -> pisr multiplexes over these
 static uint8_t curr;
@@ -27,12 +35,13 @@ bool display_drv_init() {
 	scroll_offset = 0;
 	scroll_tick = 0;
 	scrolling = false;
+	intensity = MAX_INTENSITY;
 	word_len = 0;
 
 	for (int i = 0; i < DIG_NUM; i++)
 		visible[i] = 0x00;
 
-	pisr_drv_register(display_drv_PISR, DISPLAY_TICKS);
+	pisr_drv_register(display_drv_PISR, PISR_TICKS);
 	shift_register_drv_init();
 	return true;
 }
@@ -77,22 +86,39 @@ void display_drv_write_to_digit(uint8_t dig, uint8_t code) {
 }
 
 void display_drv_PISR() {
-	// advance scroll
-	if (scrolling) {
+	pwm_counter++;
+	if (pwm_counter >= DISPLAY_TICKS)
+		pwm_counter = 0;
+
+	if (pwm_counter == 0) {
+		shift_register_drv_seg_enable(true); //  segments on
+	} else if (pwm_counter == intensity && intensity < DISPLAY_TICKS) {
+		shift_register_drv_seg_enable(false);
+	}
+
+	display_counter++;
+	if (display_counter < DISPLAY_TICKS)
+		return;
+	display_counter = 0;
+
+	curr = (curr + 1u) % DIG_NUM;
+	display_drv_write_to_digit(curr, visible[curr]);
+
+	if (scrolling) { // every 5ms we scroll (display ticks)
 		scroll_tick++;
 		if (scroll_tick >= SCROLL_TICKS) {
 			scroll_tick = 0;
 			scroll_offset++;
-
-			if (scroll_offset > scroll_total) {
-				scroll_offset = 0; // loop back to start
-			}
-
+			if (scroll_offset > scroll_total)
+				scroll_offset = 0;
 			rebuild_visible();
 		}
 	}
-
-	// one digit per PISR call
-	curr = (curr + 1u) & (DIG_NUM - 1u);
-	display_drv_write_to_digit(curr, visible[curr]);
+}
+// @todo ask if irq disabling is fine within an irq
+void display_drv_set_intensity(uint8_t intn) {
+	if ((MIN_INTENSITY <= intn) && (intn <= MAX_INTENSITY)) {
+		intensity = intn;
+		pwm_counter = 0; // restart so it doesnt look too janky, it still doesnt fix all issues
+	}
 }

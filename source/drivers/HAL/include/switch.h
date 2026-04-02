@@ -15,7 +15,7 @@
 #define SW_DBC_MS
 typedef uint8_t sw_handle_t;
 typedef enum : uint8_t { SW_EVENT_NONE = 0, SW_EVENT_CLICK, SW_EVENT_DOUBLE_CLICK, SW_EVENT_LONG_CLICK } swEventType;
-// @todo this is ugly ...
+// @todo this is ugly ... THIS SHOULD BE TRANSPARENT TO APP LAYER
 typedef enum { ACTIVE_ON_LOW = LOW, ACTIVE_ON_HIGH = HIGH } ACTIVE_ON;
 typedef enum { PULL_NONE = 0, PULL_DOWN, PULL_UP } PULL;
 
@@ -45,7 +45,6 @@ void switch_drv_unregister(sw_handle_t handle);
 /**
  * @brief Pop an event from the switch event queue. Queue is circular with max SW_MAX_PENDING_EVENTS, otherwise
  * overwrites
- * @todo preguntar sobre la queue ciruclar
  * @returns A switch event, containing the event type and the sw pin that triggered it
  */
 swEvent switch_drv_pop_event();

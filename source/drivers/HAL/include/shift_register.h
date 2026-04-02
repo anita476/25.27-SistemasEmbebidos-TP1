@@ -42,4 +42,11 @@ void shift_register_drv_sel_led(LED_SELECTION led);
  */
 void shift_register_drv_set_digit_segments(uint8_t word, DIS_DIG_SELECTION sel);
 
+/**
+ * @brief Set the output enable register for the SEGMENTS
+ * @param on If on is true, output is enabled. If not, no segments show
+ *
+ */
+void shift_register_drv_seg_enable(bool on);
+
 #endif /*_SHIFT_REGISTER_H_*/

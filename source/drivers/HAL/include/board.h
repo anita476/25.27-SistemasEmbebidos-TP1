@@ -30,9 +30,9 @@
 #define PIN_SW3 PORTNUM2PIN(PA, 4) // PTA4
 
 // Channel & switch pins for encoder
-#define PIN_ENC_CHNA PORTNUM2PIN(PC, 5)
-#define PIN_ENC_CHNB PORTNUM2PIN(PC, 3)
-#define PIN_SW_ENC PORTNUM2PIN(PB, 23)
+#define PIN_ENC_CHNA PORTNUM2PIN(PC, 3)
+#define PIN_ENC_CHNB PORTNUM2PIN(PC, 2)
+#define PIN_SW_ENC PORTNUM2PIN(PA, 2)
 
 // DEnc board status leds selection pins
 #define PIN_U1B_STATUS0 PORTNUM2PIN(PC, 7)
@@ -53,6 +53,7 @@
 #define SR_DATA PORTNUM2PIN(PD, 1) // serial data in
 #define SR_SCLK PORTNUM2PIN(PD, 3) // shift clock
 #define SR_LATCH PORTNUM2PIN(PD, 2)
-#define SR_OE PORTNUM2PIN(PD, 0) // output enable
+#define SR_DEC_OE PORTNUM2PIN(PD, 0) // output enable for selectors! (probs unused ..)
+#define SR_SEG_OE PORTNUM2PIN(PC, 4) // output enable for SEGMENTS
 
 #endif // _BOARD_H_

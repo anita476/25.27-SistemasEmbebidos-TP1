@@ -45,6 +45,7 @@ void App_Init(void) {
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
 	encoderDir enc_ev;
+	uint8_t display_intensity = MAX_INTENSITY;
 	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,
 					  SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
 	uint8_t word2[DIG_NUM] = {SEG7_BLANK, SEG7_CHAR('H'), SEG7_CHAR('I'), SEG7_EXCL};
@@ -85,9 +86,15 @@ void App_Run(void) {
 		while ((enc_ev = encoder_drv_pop_event()) != ENC_NONE) { // pop all in the queue
 			if (enc_ev == ENC_CCW) {
 				printf("CCW step\n");
+				if (display_intensity > MIN_INTENSITY) {
+					display_drv_set_intensity(--display_intensity);
+				}
 			}
 			if (enc_ev == ENC_CW) {
 				printf("CW step\n");
+				if (display_intensity < MAX_INTENSITY) {
+					display_drv_set_intensity(++display_intensity);
+				}
 			}
 		}
 	}
