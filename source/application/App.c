@@ -45,7 +45,10 @@ void App_Init(void) {
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
 	encoderDir enc_ev;
-	uint8_t word[DIG_NUM] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
+	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,
+					  SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
+	uint8_t word2[DIG_NUM] = {SEG7_BLANK, SEG7_CHAR('H'), SEG7_CHAR('I'), SEG7_EXCL};
+
 	uint8_t nothing[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
 	/**
 	 * Obs!! For printf must enable semihosting:
@@ -60,20 +63,19 @@ void App_Run(void) {
 		switch (ev.event_type) {
 			case SW_EVENT_CLICK:
 				printf("Pin %d -> CLICK\n", ev.swPin);
-				display_drv_write_word(word);
+				display_drv_write_word(word, 9);
 				shift_register_drv_sel_led(LED_SEL_FIRST);
 				break;
 			case SW_EVENT_DOUBLE_CLICK:
 				printf("Pin %d -> DOUBLE CLICK\n", ev.swPin);
+				display_drv_write_word(word2, DIG_NUM);
 				shift_register_drv_sel_led(LED_SEL_SECOND);
-
-				// display_drv_write_to_digit(1, SEG7_CHAR('L'));
 
 				break;
 			case SW_EVENT_LONG_CLICK:
 				printf("Pin %d -> LONG CLICK\n", ev.swPin);
 				shift_register_drv_sel_led(LED_SEL_THIRD);
-				display_drv_write_word(nothing);
+				display_drv_write_word(nothing, DIG_NUM);
 
 				break;
 			case SW_EVENT_NONE:

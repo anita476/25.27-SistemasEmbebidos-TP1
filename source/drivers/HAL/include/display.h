@@ -6,7 +6,9 @@
 #include <stdint.h>
 
 #define DIG_NUM 4
-#define MAX_WD_SIZE 255
+
+#define MAX_WORD_LEN 254
+#define SCROLL_TICKS 30
 
 /**
  * @brief Initialize display peripheral
@@ -21,10 +23,13 @@ bool display_drv_init();
  */
 void display_drv_write_to_digit(uint8_t dig, uint8_t code);
 
-/*
+/**
  * @brief Write word to display in digit starting with digit 0
+ * @param new_word New word to write
+ * @param size Amount of characters in word
+ * @note When word is larger than DIG_NUM, the display scrolls the word horizontally
  */
 
-void display_drv_write_word(uint8_t new_word[DIG_NUM]);
+void display_drv_write_word(uint8_t *new_word, uint8_t size);
 
 #endif /* _DISPLAY_H_ */

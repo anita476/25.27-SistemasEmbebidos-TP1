@@ -96,3 +96,12 @@ void shift_register_drv_PISR() {
 	current_output = pending_output;
 	dirty = false;
 }
+
+void shift_register_drv_set_digit_segments(uint8_t word, DIS_DIG_SELECTION sel) {
+	if (!initialized)
+		return;
+	pending_output &= ~(SEG_MASK | DIGIT_MASK);
+	pending_output |= ((uint16_t) word << SEG_SHIFT);
+	pending_output |= ((uint16_t) (sel & 0x03) << DIGIT_SHIFT);
+	dirty = (pending_output != current_output);
+}

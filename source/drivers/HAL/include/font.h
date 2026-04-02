@@ -25,14 +25,14 @@
 /*  Segment bit masks                                                   */
 /* ------------------------------------------------------------------ */
 
-#define SEG_A_MASK   (1 << 0)   
-#define SEG_B_MASK   (1 << 1)   
-#define SEG_C_MASK   (1 << 2) 
-#define SEG_D_MASK   (1 << 3)  
-#define SEG_E_MASK   (1 << 4)  
-#define SEG_F_MASK   (1 << 5)   
-#define SEG_G_MASK   (1 << 6)  
-#define SEG_DP_MASK  (1 << 7)  
+#define SEG_A_MASK (1 << 0)
+#define SEG_B_MASK (1 << 1)
+#define SEG_C_MASK (1 << 2)
+#define SEG_D_MASK (1 << 3)
+#define SEG_E_MASK (1 << 4)
+#define SEG_F_MASK (1 << 5)
+#define SEG_G_MASK (1 << 6)
+#define SEG_DP_MASK (1 << 7)
 
 /* ------------------------------------------------------------------ */
 /*  Digit font table (0–9)                                             */
@@ -54,16 +54,16 @@
  */
 
 static const uint8_t Seg7DigitCode[10] = {
-    0x3F,  /* 0 */
-    0x06,  /* 1 */
-    0x5B,  /* 2 */
-    0x4F,  /* 3 */
-    0x66,  /* 4 */
-    0x6D,  /* 5 */
-    0x7D,  /* 6 */
-    0x07,  /* 7 */
-    0x7F,  /* 8 */
-    0x6F   /* 9 */
+	0x3F, /* 0 */
+	0x06, /* 1 */
+	0x5B, /* 2 */
+	0x4F, /* 3 */
+	0x66, /* 4 */
+	0x6D, /* 5 */
+	0x7D, /* 6 */
+	0x07, /* 7 */
+	0x7F, /* 8 */
+	0x6F  /* 9 */
 };
 
 /* ------------------------------------------------------------------ */
@@ -99,57 +99,60 @@ static const uint8_t Seg7DigitCode[10] = {
  *   X   |   0  1  1  1  0  1  1  0  | 0x76  | same as H
  *   Y   |   0  1  1  0  1  1  1  0  | 0x6E  |
  *   Z   |   0  1  0  1  1  0  1  1  | 0x5B  | same as 2
+ *
+ *   !   |.  1. 0  0  0  0  0  1  0. |. 0x82
  */
 
 static const uint8_t Seg7AlphaCode[26] = {
-    0x77,  /* A */
-    0x7C,  /* B */
-    0x39,  /* C */
-    0x5E,  /* D */
-    0x79,  /* E */
-    0x71,  /* F */
-    0x3D,  /* G */
-    0x76,  /* H */
-    0x06,  /* I */
-    0x1E,  /* J */
-    0x75,  /* K */
-    0x38,  /* L */
-    0x25,  /* M */
-    0x55,  /* N */
-    0x3F,  /* O */
-    0x73,  /* P */
-    0x67,  /* Q */
-    0x51,  /* R */
-    0x6D,  /* S */
-    0x78,  /* T */
-    0x3E,  /* U */
-    0x1E,  /* V */
-    0x3E,  /* W */
-    0x76,  /* X */
-    0x6E,  /* Y */
-    0x5B   /* Z */
+	0x77, /* A */
+	0x7C, /* B */
+	0x39, /* C */
+	0x5E, /* D */
+	0x79, /* E */
+	0x71, /* F */
+	0x3D, /* G */
+	0x76, /* H */
+	0x06, /* I */
+	0x1E, /* J */
+	0x75, /* K */
+	0x38, /* L */
+	0x25, /* M */
+	0x55, /* N */
+	0x3F, /* O */
+	0x73, /* P */
+	0x67, /* Q */
+	0x51, /* R */
+	0x6D, /* S */
+	0x78, /* T */
+	0x3E, /* U */
+	0x1E, /* V */
+	0x3E, /* W */
+	0x76, /* X */
+	0x6E, /* Y */
+	0x5B  /* Z */
 };
 
 /* ------------------------------------------------------------------ */
 /*  Special characters                                                  */
 /* ------------------------------------------------------------------ */
 
-#define SEG7_BLANK      0x00   /* all segments off        */
-#define SEG7_MINUS      0x40   /* minus sign  ( g only )  */
-#define SEG7_UNDERSCORE 0x08   /* underscore  ( d only )  */
-#define SEG7_DP         0x80   /* decimal point only      */
+#define SEG7_BLANK 0x00		 /* all segments off        */
+#define SEG7_MINUS 0x40		 /* minus sign  ( g only )  */
+#define SEG7_UNDERSCORE 0x08 /* underscore  ( d only )  */
+#define SEG7_DP 0x80		 /* decimal point only      */
+#define SEG7_EXCL 0x82		 /* exclamation mark*/
 
 /* ------------------------------------------------------------------ */
 /*  Macros                                                       */
 /* ------------------------------------------------------------------ */
 
 /** Add decimal point to any glyph */
-#define SEG7_WITH_DP(glyph)     ((glyph) | SEG_DP)
+#define SEG7_WITH_DP(glyph) ((glyph) | SEG_DP)
 
 /** Look up a digit glyph safely */
-#define SEG7_DIGIT(n)           (((n) < 10) ? Seg7DigitCode[(n)] : SEG7_BLANK)
+#define SEG7_DIGIT(n) (((n) < 10) ? Seg7DigitCode[(n)] : SEG7_BLANK)
 
 /** Look up an uppercase letter glyph safely */
-#define SEG7_CHAR(c)            ((((c) >= 'A') && ((c) <= 'Z')) ? Seg7AlphaCode[(c) - 'A'] : SEG7_BLANK)
+#define SEG7_CHAR(c) ((((c) >= 'A') && ((c) <= 'Z')) ? Seg7AlphaCode[(c) - 'A'] : SEG7_BLANK)
 
 #endif /* SEG7_FONT_H */
