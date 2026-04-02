@@ -8,21 +8,14 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "../../SDK/CMSIS/fsl_device_registers.h"
-#include "../drivers/HAL/include/MC74HC139.h"
 #include "../drivers/HAL/include/board.h"
 #include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
+#include "../drivers/HAL/include/shift_register.h"
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
 
 #include <stdio.h>
-
-typedef enum {
-	STATUS_LED_NONE = MC74HC139_Y0,
-	STATUS_LED_D1 = MC74HC139_Y1,
-	STATUS_LED_D2 = MC74HC139_Y2,
-	STATUS_LED_D3 = MC74HC139_Y3,
-} DEncStatusLeds;
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -38,8 +31,6 @@ void App_Init(void) {
 	timer_drv_init();
 	switch_drv_init();
 	encoder_drv_init();
-	MC74HC139_drv_init(MC74HC139_DEV_U1B);
-	MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_NONE);
 	display_drv_init();
 
 	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
@@ -69,21 +60,20 @@ void App_Run(void) {
 		switch (ev.event_type) {
 			case SW_EVENT_CLICK:
 				printf("Pin %d -> CLICK\n", ev.swPin);
-				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D1);
-				// display_drv_write_to_digit(0, SEG7_CHAR('A'));
 				display_drv_write_word(word);
+				shift_register_drv_sel_led(LED_SEL_FIRST);
 				break;
 			case SW_EVENT_DOUBLE_CLICK:
 				printf("Pin %d -> DOUBLE CLICK\n", ev.swPin);
-				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D2);
+				shift_register_drv_sel_led(LED_SEL_SECOND);
+
 				// display_drv_write_to_digit(1, SEG7_CHAR('L'));
 
 				break;
 			case SW_EVENT_LONG_CLICK:
 				printf("Pin %d -> LONG CLICK\n", ev.swPin);
-				MC74HC139_drv_select(MC74HC139_DEV_U1B, STATUS_LED_D3);
+				shift_register_drv_sel_led(LED_SEL_THIRD);
 				display_drv_write_word(nothing);
-				// display_drv_write_to_digit(2, SEG7_CHAR('D'));
 
 				break;
 			case SW_EVENT_NONE:

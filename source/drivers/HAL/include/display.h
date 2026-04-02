@@ -19,7 +19,7 @@ bool display_drv_init();
  * @param dig Digit to write symbol to
  * @param code Symbol code (defined in font.h)
  */
-void display_drv_write_to_digit(uint32_t dig, uint8_t code);
+void display_drv_write_to_digit(uint8_t dig, uint8_t code);
 
 /*
  * @brief Write word to display in digit starting with digit 0

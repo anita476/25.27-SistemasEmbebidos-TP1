@@ -78,13 +78,9 @@ void gpio_drv_mode(pin_t pin, uint8_t mode) {
 	SIM->SCGC5 |= port_clock_masks[port_num];
 
 	/* Building pcr
-	 * built sequentially for clarity... OBS!! CHANGE THIS TO BE IN ONE LINE
 	 */
-	uint32_t pcr = PORT_PCR_MUX(PORT_mGPIO); // aet to gpio mode
-
-	pcr |= PORT_PCR_DSE(1);				  // drive strtength high
-	pcr |= PORT_PCR_SRE(1);				  // slew rate slow
-	pcr |= PORT_PCR_IRQC(PORT_eDisabled); // disable interrupts
+	uint32_t pcr = PORT_PCR_MUX(PORT_mGPIO) | PORT_PCR_DSE(1) | PORT_PCR_SRE(1) |
+				   PORT_PCR_IRQC(PORT_eDisabled); // disable interrupts
 
 	if (mode == INPUT_PULLDOWN) {
 		pcr |= PORT_PCR_PE(1);		  // pull enable
@@ -123,9 +119,7 @@ void gpio_drv_write(pin_t pin, bool value) {
 }
 
 void gpio_drv_toggle(pin_t pin) {
-	if (gpio_ptrs[PIN2PORT(pin)]->PDDR & (1 << PIN2NUM(pin))) {
-		gpio_ptrs[PIN2PORT(pin)]->PTOR = (1 << PIN2NUM(pin));
-	}
+	gpio_ptrs[PIN2PORT(pin)]->PTOR = (1 << PIN2NUM(pin));
 }
 
 bool gpio_drv_read(pin_t pin) {

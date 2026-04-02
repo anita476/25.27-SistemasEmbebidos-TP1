@@ -1,50 +1,67 @@
 # Sistemas Embebidos - TP1 
 ## Grupo 1
-### Integrantes: 
+### Integrantes 
 * Cristóbal Kramer
 * Federico Gentile
-* Ramón Devesa
+* Rodrigo Devesa
 * Ana Negre
+----------------------------
+
 
 ## MCU Pin Assignments
 
-> **Encoder**
+> **Encoder pin assignments**
 > 
-> `Channel A` a `PTC5`
+> `Channel A` to `PTC5`
 >
-> `Channel B` a `PTC3`
+> `Channel B` to `PTC3`
 > 
-> `RSwitch` a `PTB23`
+> `RSwitch` to `PTB23`
 
-> **LED decoder**
-> 
-> `Status 0` to `PTC7`
-> 
-> `Status 1` to `PTC0`
-> 
 
-> **DISPLAY decoder**
-> 
-> `sel0` to `PTC9`
-> 
-> `sel1` to `PTC8`
-> 
+> **Shift Register Assignments**
+>
+> `A (data)` to `PTD1`
+>
+> `SCLK` to `PTD3`
+>
+> `LCLK` to `PTD2`
+>
+> `OE`  to `PTD0`
 
-> **DISPLAY DIGITS**
+
+## Shift Register Output assignments
+
+> **Shift register data output to encoder board**
+>
+> `QA_1` to `sel0`
+>
+> `QB_1` to `sel1`
+>
+> `QC_1` to `status0`
+>
+> `QD_1` to `status1`
+>
+> `QE_1` _EMPTY_
+>
+> `QF_1` _EMPTY_
+>
+> `QG_1` _EMPTY_
+>
+> `QH_1` _EMPTY_ 
 > 
-> `CSEGA` to `PTE24`
-> 
-> `CSEGB` to `PTE25`
-> 
-> `CSEGC` to `PTD1`
-> 
-> `CSEGD` to `PTD3`
-> 
-> `CSEGE` to `PTD2`
-> 
-> `CSEGF` to `PTD0`
-> 
-> `CSEGF` to `PTC4`
-> 
-> `CSEGDP` to `PTC12`
-> 
+> `QA_2` to `CSEGA`
+>
+> `QB_2` to `CSEGB`
+>
+> `QC_2` to `CSEGC`
+>
+> `QD_2` to `CSEGD`
+>
+> `QE_2` to `CSEGE`
+>
+> `QF_2` to `CSEGF`
+>
+> `QG_2` to `CSEGG`
+>
+> `QH_2` to  `CSEGDP`
