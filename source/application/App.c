@@ -45,10 +45,18 @@ void App_Init(void) {
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
 	encoderDir enc_ev;
+
+#define MAX_PIN_LEN 5
+	uint8_t pin[MAX_PIN_LEN] = {0};
+	uint8_t pin_index = 0;
+	int cur_value = 0;
+
+	uint8_t display_digits[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
+	for (int i = 0; i < pin_index && i < DIG_NUM; i++) {
+		display_digits[i] = SEG7_CHAR('0' + pin[i]);
+	}
+
 	uint8_t display_intensity = MAX_INTENSITY;
-	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,
-					  SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
-	uint8_t word2[DIG_NUM] = {SEG7_BLANK, SEG7_CHAR('H'), SEG7_CHAR('I'), SEG7_EXCL};
 
 	uint8_t nothing[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
 	/**
@@ -63,15 +71,21 @@ void App_Run(void) {
 		swEvent ev = switch_drv_pop_event();
 		switch (ev.event_type) {
 			case SW_EVENT_CLICK:
+				if (pin_index < MAX_PIN_LEN) {
+					pin[pin_index++] = cur_value;
+					printf("Stored digit %d at pos %d\n", cur_value, pin_index - 1);
+
+					cur_value = 0; // reset for next digit
+				}
+
 				printf("Pin %d -> CLICK\n", ev.swPin);
-				display_drv_write_word(word, 9);
+				display_drv_write_word(display_digits, DIG_NUM);
 				shift_register_drv_sel_led(LED_SEL_FIRST);
 				break;
 			case SW_EVENT_DOUBLE_CLICK:
-				printf("Pin %d -> DOUBLE CLICK\n", ev.swPin);
-				display_drv_write_word(word2, DIG_NUM);
-				shift_register_drv_sel_led(LED_SEL_SECOND);
-
+				// Reset system
+				pin_index = 0;
+				cur_value = 0;
 				break;
 			case SW_EVENT_LONG_CLICK:
 				printf("Pin %d -> LONG CLICK\n", ev.swPin);
@@ -86,15 +100,11 @@ void App_Run(void) {
 		while ((enc_ev = encoder_drv_pop_event()) != ENC_NONE) { // pop all in the queue
 			if (enc_ev == ENC_CCW) {
 				printf("CCW step\n");
-				if (display_intensity > MIN_INTENSITY) {
-					display_drv_set_intensity(--display_intensity);
-				}
+				cur_value++;
 			}
 			if (enc_ev == ENC_CW) {
 				printf("CW step\n");
-				if (display_intensity < MAX_INTENSITY) {
-					display_drv_set_intensity(++display_intensity);
-				}
+				cur_value--;
 			}
 		}
 	}
