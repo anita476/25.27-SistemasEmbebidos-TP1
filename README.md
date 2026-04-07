@@ -12,12 +12,11 @@
 
 > **Encoder pin assignments**
 > 
-> `Channel A` to `PTC5`
+> `Channel A` to `PTC3`
 >
-> `Channel B` to `PTC3`
+> `Channel B` to `PTC2`
 > 
-> `RSwitch` to `PTB23`
-
+> `RSwitch` to `PTA2`
 
 > **Shift Register Assignments**
 >
@@ -29,6 +28,14 @@
 >
 > `OE`  to `PTD0`
 
+> **Card reader pin assignments**
+> 
+> `DATA` to `PTB23`
+>
+> `CLK` to `PTA1`
+> 
+> `ENABLE` to `PTB9`
+>
 
 ## Shift Register Output assignments
 
