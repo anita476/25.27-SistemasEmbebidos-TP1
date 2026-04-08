@@ -21,3 +21,7 @@ ZephyrRTOS_TAD_logs/*
 */.settings/*
 .settings
 /Debug/
+
+
+# logs 
+*.log

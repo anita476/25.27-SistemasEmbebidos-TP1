@@ -11,6 +11,7 @@
 #include "../drivers/HAL/include/board.h"
 #include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
+#include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/shift_register.h"
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
@@ -32,6 +33,7 @@ void App_Init(void) {
 	switch_drv_init();
 	encoder_drv_init();
 	display_drv_init();
+	reader_drv_init();
 
 	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
 	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
@@ -59,6 +61,7 @@ void App_Run(void) {
 	 */
 
 	while (1) {
+		reader_drv_event();
 		timer_drv_update(); /* must be called every iteration  @todo ask if this is ok*/
 		swEvent ev = switch_drv_pop_event();
 		switch (ev.event_type) {
