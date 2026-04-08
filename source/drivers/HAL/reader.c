@@ -78,7 +78,7 @@ void card_Clock_ISR(void) {
 		temp_char |= (bit << bit_count); // LSB FIRST !!!
 		bit_count++;
 		if (bit_count == 5) {
-			if (temp_char == CODED_D) {
+			if (temp_char == CODED_D) { // it still keeps reading until FS, only that it doesnt put it in the buffer
 				buffer[char_count] = '\0';
 				card_ready = true;
 				reading_active = false;

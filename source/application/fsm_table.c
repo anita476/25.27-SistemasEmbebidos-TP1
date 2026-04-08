@@ -1,5 +1,47 @@
 #include "include/fsm_table.h"
+#include "../drivers/HAL/include/display.h"
+#include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
+#include <stdio.h>
+
+/****************************CONST DECLARATION OF DISPLAY ARRAYS ********************************************/
+const uint8_t GREETING[] = {SEG7_H, SEG7_E, SEG7_L, SEG7_L, SEG7_O, SEG7_EXCL};
+const uint8_t GREETING_NUM = 6; // if i do strlen here, bc its constant its defined at compiletime ?
+
+const uint8_t OPEN[] = {SEG7_O, SEG7_P, SEG7_E, SEG7_N};
+const uint8_t OPEN_NUM = 4;
+
+const uint8_t FAIL[] = {SEG7_F, SEG7_A, SEG7_I, SEG7_L};
+const uint8_t FAIL_NUM = 4;
+
+const uint8_t CLR[] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
+const uint8_t CLR_NUM = 4;
+
+/* 1_ CARD */
+const uint8_t MENU_CARD[] = {SEG7_1, SEG7_DP, SEG7_BLANK, SEG7_C, SEG7_A, SEG7_R, SEG7_D};
+const uint8_t MENU_CARD_NUM = 7;
+
+/* 2_ INPUT*/
+const uint8_t MENU_MANUAL[] = {SEG7_2, SEG7_DP, SEG7_BLANK, SEG7_I, SEG7_N, SEG7_P, SEG7_U, SEG7_T};
+const uint8_t MENU_MANUAL_NUM = 8;
+
+/* 3_ INT.*/
+const uint8_t MENU_INTENSITY[] = {SEG7_3, SEG7_DP, SEG7_BLANK, SEG7_I, SEG7_N, SEG7_T, SEG7_DP};
+const uint8_t MENU_INTENSITY_NUM = 7;
+
+/* .......   ........ */
+const uint8_t WAITING[] = {SEG7_DP,	   SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_BLANK,
+						   SEG7_BLANK, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP};
+const uint8_t WAITING_NUM = 14;
+
+typedef struct {
+	uint8_t *item;
+	uint8_t item_length;
+} MenuItem_t;
+
+const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD, .item_length = MENU_CARD_NUM},
+									 {.item = (uint8_t *) MENU_MANUAL, .item_length = MENU_MANUAL_NUM},
+									 {.item = (uint8_t *) MENU_INTENSITY, .item_length = MENU_INTENSITY_NUM}};
 
 /*  Forward declarations of state arrays */
 FSMState_t state_init[];
@@ -12,9 +54,8 @@ FSMState_t state_success[];
 FSMState_t state_failure[];
 
 /* ── Forward declarations of actions @todo missing */
-// @todo these are missing ! they dont do anythin now.
 // obs! ojo con los timers, varias acciones tienen que stoppear or inicializarlos
-static void action_show_greeting(void); // start misc timer, write and exit
+static void action_show_greeting();
 static void action_show_menu(void);
 static void action_do_nothing(void);
 static void action_menu_next(void);
@@ -30,17 +71,18 @@ static void action_input_card_increment_dig(void);
 static void action_input_card_decrement_dig(void);
 static void action_advance_card_num(void);
 static void action_rollback_card_num(void);
-static void action_stop_misc_timer(); /* in case we perform an action, stop timer to be safe */
+static void action_stop_misc_timer_and_menu(); /* in case we perform an action, stop timer to be safe */
+static void action_clear_display();
 
 /*************************************************************************************************************************/
 /***********************************************  TRANSITIONS. **************************************************/
 /*************************************************************************************************************************/
-FSMState_t state_init[] = {{EV_NONE, NULL, action_show_greeting},
-						   {EV_CLICK, NULL, action_stop_misc_timer}, /* if someone clicks or smth, exit to main menu*/
-						   {EV_DOUBLE_CLICK, NULL, action_stop_misc_timer},
-						   {EV_LONG_CLICK, NULL, action_stop_misc_timer},
-						   {EV_TIMEOUT_MISC, NULL, action_do_nothing},
-						   {TABLE_END, NULL, action_do_nothing}};
+FSMState_t state_init[] = {
+	{EV_CLICK, NULL, action_stop_misc_timer_and_menu}, /* if someone clicks or smth, exit to main menu*/
+	{EV_DOUBLE_CLICK, NULL, action_stop_misc_timer_and_menu},
+	{EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu},
+	{EV_TIMEOUT_MISC, NULL, action_show_menu},
+	{TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_menu_main[] = {{EV_ENC_CW, NULL, action_menu_next},
 								{EV_ENC_CCW, NULL, action_menu_prev},
@@ -83,12 +125,17 @@ FSMState_t state_success[] = {{EV_TIMEOUT_MISC, NULL, action_show_menu}, {TABLE_
 FSMState_t state_failure[] = {{EV_TIMEOUT_BLOCK_CTR, NULL, action_show_menu}, {TABLE_END, NULL, action_do_nothing}};
 
 void FSM_InitTable(void) {
+	/* TIMERS BEFORE INITING TABLES !*/
+	g_app_ctx.timer_timeout_block = timer_drv_get_id();
+	g_app_ctx.timer_misc = timer_drv_get_id();
+
+	// todo: fix later if theres time
+
 	state_init[0].next_state = state_menu_main;
 	state_init[1].next_state = state_menu_main;
 	state_init[2].next_state = state_menu_main;
 	state_init[3].next_state = state_menu_main;
-	state_init[4].next_state = state_menu_main;
-	state_init[5].next_state = state_menu_main;
+	state_init[4].next_state = state_init; // if nothing happened, stay here
 
 	state_menu_main[0].next_state = state_menu_main; // EV_ENC_CW
 	state_menu_main[1].next_state = state_menu_main; // EV_ENC_CCW
@@ -131,6 +178,9 @@ void FSM_InitTable(void) {
 
 	state_failure[0].next_state = state_init;	 // EV_TIMEOUT_BLOCK_CTR
 	state_failure[1].next_state = state_failure; // TABLE_END
+
+	/* Leave things in initial state*/
+	action_show_greeting();
 }
 
 FSMState_t *FSM_GetInitState(void) {
@@ -141,16 +191,34 @@ FSMState_t *FSM_GetInitState(void) {
 /***********************************************  ACTIONS *******************************************************/
 /*************************************************************************************************************************/
 static void action_show_greeting(void) {
+	// start timer
+	bool ok = timer_drv_start(g_app_ctx.timer_misc, 3000, TIM_MODE_SINGLESHOT, NULL);
+	printf("timer started: %d, id: %d\n", ok, g_app_ctx.timer_misc);
+	// show display
+	display_drv_write_word((uint8_t *) GREETING, GREETING_NUM);
+	// exit
 }
+
 static void action_show_menu(void) {
+	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
+
 static void action_do_nothing(void) {
+	/*/*/
 }
 static void action_menu_next(void) {
+	int new = (g_app_ctx.menu_selected == (MENU_ITEMS - 1) ? 0 : (g_app_ctx.menu_selected + 1));
+	g_app_ctx.menu_selected = new;
+	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected);
+	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_prev(void) {
+	int new = (g_app_ctx.menu_selected == 0 ? (MENU_ITEMS - 1) : (g_app_ctx.menu_selected - 1));
+	g_app_ctx.menu_selected = new;
+	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_select(void) {
+	printf("Selected menu item %d", g_app_ctx.menu_selected);
 }
 static void action_reset_retries(void) {
 }
@@ -172,5 +240,16 @@ static void action_advance_card_num(void) {
 }
 static void action_rollback_card_num(void) {
 }
-static void action_stop_misc_timer() {
+static void action_stop_misc_timer_and_menu() {
+	// stop timer,
+	timer_drv_stop(g_app_ctx.timer_misc);
+	// display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
+	printf("Stopped misc timer prematurely\n");
+
+	action_show_menu();
+	// exit
+}
+
+static void action_clear_display() {
+	display_drv_write_word(CLR, CLR_NUM);
 }

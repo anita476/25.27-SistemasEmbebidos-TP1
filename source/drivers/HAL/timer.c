@@ -47,7 +47,8 @@ bool timer_drv_start(timId_t id, timTick_t ticks, uint8_t mode, timCallback_t ca
 	if (id >= TIMERS_MAX_CANT)
 		return false;
 
-	/* allow restart from OCCUPIED or ACTIVE (e.g. state transitions) */
+	/* allow restart from OCCUPIED or ACTIVE
+	 **/
 	if (timers[id].state != TIM_OCCUPIED && timers[id].state != TIM_ACTIVE)
 		return false;
 
@@ -80,7 +81,7 @@ void timer_drv_update(void) {
 		if (timers[i].state != TIM_ACTIVE)
 			continue;
 
-		bool expired = (timTick_t) (timer_tick - timers[i].expires_at) < TIM_TICK_HALF_MAX;
+		bool expired = (timTick_t) (timer_tick - timers[i].expires_at) <= TIM_TICK_HALF_MAX;
 		if (!expired)
 			continue;
 

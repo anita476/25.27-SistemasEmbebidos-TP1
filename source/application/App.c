@@ -29,7 +29,7 @@
  * since we are working sequentially and interrupts dont access it or use it, it should be safe
  * */
 AppContext_t g_app_ctx = {.current_state = NULL, // set after initing tabl
-						  .menu_selected = 0,
+						  .menu_selected = 0,	 /* first by default*/
 						  .retry_count = 3,
 						  .timer_timeout_block = TIMER_INVALID_ID,
 						  .timer_misc = TIMER_INVALID_ID,
@@ -41,7 +41,7 @@ AppContext_t g_app_ctx = {.current_state = NULL, // set after initing tabl
 						GLOBAL FUNCTION DEFINITIONS
 *******************************************************************************/
 
-EVENT App_CaptureEvent();
+static EVENT App_CaptureEvent();
 /********************************************************************************
 ******************************************************************************/
 /* interrupts are disabled at this point*/
@@ -52,6 +52,13 @@ void App_Init(void) {
 	display_drv_init();
 	reader_drv_init();
 
+	uint8_t display_intensity = MAX_INTENSITY;
+	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,
+					  SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
+	uint8_t word2[DIG_NUM] = {SEG7_BLANK, SEG7_CHAR('H'), SEG7_CHAR('I'), SEG7_EXCL};
+
+	uint8_t nothing[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
+
 	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
 	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
 								printf("Initialized sw in pin: %d\n", PIN_SW_ENC);
@@ -60,8 +67,12 @@ void App_Init(void) {
 	btn2 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW3) :
 								printf("Initialized sw in pin: %d\n", PIN_SW3);
 
-	g_app_ctx.timer_timeout_block = timer_drv_get_id();
-	g_app_ctx.timer_misc = timer_drv_get_id();
+	FSM_InitTable();
+
+	// initial state
+	g_app_ctx.current_state = FSM_GetInitState();
+
+	// display_drv_write_word(word, 9);
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
@@ -72,21 +83,30 @@ void App_Run(void) {
 		// Capture ONE event from all input sources
 		EVENT curr_event = App_CaptureEvent();
 
-		// Feed event to FSM
-		/*
+		// Feed event to FSM if theres something
 		if (curr_event != EV_NONE) {
 			g_app_ctx.current_state = fsm(g_app_ctx.current_state, curr_event);
 		}
-		*/
 	}
 }
 
-EVENT App_CaptureEvent() {
+static EVENT App_CaptureEvent() {
+	if (timer_drv_expired(g_app_ctx.timer_misc)) {
+		printf("EVENT: EV_TIMEOUT_MISC\n");
+
+		return EV_TIMEOUT_MISC;
+	}
+
+	if (timer_drv_expired(g_app_ctx.timer_timeout_block)) {
+		printf("EVENT: EV_TIMEOUT_CTR\n");
+		return EV_TIMEOUT_BLOCK_CTR;
+	}
+
 	// @todo add magnetic reading logic !
-	// if(reader_drv_has_card()){
-	//	get card and set success or failure
-	// }
-	reader_drv_event();
+	if (reader_drv_event()) {
+		printf("EVENT: RCV_CARD_S\n");
+		return EV_RCV_CARD_S;
+	}
 	swEvent sw_ev = switch_drv_pop_event();
 	if (sw_ev.event_type == SW_EVENT_CLICK) {
 		printf("EVENT: CLICK\n");
@@ -111,12 +131,6 @@ EVENT App_CaptureEvent() {
 		return EV_ENC_CCW;
 	}
 
-	if (timer_drv_expired(g_app_ctx.timer_timeout_block)) {
-		return EV_TIMEOUT_BLOCK_CTR;
-	}
-	if (timer_drv_expired(g_app_ctx.timer_misc)) {
-		return EV_TIMEOUT_MISC;
-	}
 	// No event
 	return EV_NONE;
 }

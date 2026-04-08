@@ -86,7 +86,7 @@ static const uint8_t Seg7DigitCode[10] = {
  *   K   |   0  1  1  1  0  1  0  1  | 0x75  | approximation
  *   L   |   0  0  1  1  1  0  0  0  | 0x38  |
  *   M   |   0  0  1  0  0  1  0  1  | 0x25  | approximation
- *   N   |   0  1  0  1  0  1  0  1  | 0x55  | approximation
+ *   N   |   0  1  0  1  0  1  0  0  | 0x54  | approximation
  *   O   |   0  0  1  1  1  1  1  1  | 0x3F  | same as 0
  *   P   |   0  1  1  1  0  0  1  1  | 0x73  |
  *   Q   |   0  1  1  0  0  1  1  1  | 0x67  |
@@ -117,7 +117,7 @@ static const uint8_t Seg7AlphaCode[26] = {
 	0x75, /* K */
 	0x38, /* L */
 	0x25, /* M */
-	0x55, /* N */
+	0x54, /* N */
 	0x3F, /* O */
 	0x73, /* P */
 	0x67, /* Q */
@@ -154,5 +154,46 @@ static const uint8_t Seg7AlphaCode[26] = {
 
 /** Look up an uppercase letter glyph safely */
 #define SEG7_CHAR(c) ((((c) >= 'A') && ((c) <= 'Z')) ? Seg7AlphaCode[(c) - 'A'] : SEG7_BLANK)
+
+/*** for constant arrays */
+#define SEG7_A 0x77 /* A */
+#define SEG7_B 0x7C /* B */
+#define SEG7_C 0x39 /* C */
+#define SEG7_D 0x5E /* D */
+#define SEG7_E 0x79 /* E */
+#define SEG7_F 0x71 /* F */
+#define SEG7_G 0x3D /* G */
+#define SEG7_H 0x76 /* H */
+#define SEG7_I 0x06 /* I */
+#define SEG7_J 0x1E /* J */
+#define SEG7_K 0x75 /* K */
+#define SEG7_L 0x38 /* L */
+#define SEG7_M 0x25 /* M */
+#define SEG7_N 0x55 /* N */
+#define SEG7_O 0x3F /* O */
+#define SEG7_P 0x73 /* P */
+#define SEG7_Q 0x67 /* Q */
+#define SEG7_R 0x51 /* R */
+#define SEG7_S 0x6D /* S */
+#define SEG7_T 0x78 /* T */
+#define SEG7_U 0x3E /* U */
+#define SEG7_V 0x1E /* V */
+#define SEG7_W 0x3E /* W */
+#define SEG7_X 0x76 /* X */
+#define SEG7_Y 0x6E /* Y */
+#define SEG7_Z 0x5B /* Z */
+
+#define SEG7_0 0x3F /* 0 */
+#define SEG7_1 0x06 /* 1 */
+#define SEG7_2 0x5B /* 2 */
+#define SEG7_3 0x4F /* 3 */
+#define SEG7_4 0x66 /* 4 */
+#define SEG7_5 0x6D /* 5 */
+#define SEG7_6 0x7D /* 6 */
+#define SEG7_7 0x07 /* 7 */
+#define SEG7_8 0x7F /* 8 */
+#define SEG7_9 0x6F /* 9 */
+
+/********************************* CONSTANT ARRAYS *********************************/
 
 #endif /* SEG7_FONT_H */
