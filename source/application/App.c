@@ -11,6 +11,7 @@
 #include "../drivers/HAL/include/board.h"
 #include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
+#include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/shift_register.h"
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
@@ -49,6 +50,7 @@ void App_Init(void) {
 	switch_drv_init();
 	encoder_drv_init();
 	display_drv_init();
+	reader_drv_init();
 
 	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
 	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
@@ -71,9 +73,11 @@ void App_Run(void) {
 		EVENT curr_event = App_CaptureEvent();
 
 		// Feed event to FSM
+		/*
 		if (curr_event != EV_NONE) {
 			g_app_ctx.current_state = fsm(g_app_ctx.current_state, curr_event);
 		}
+		*/
 	}
 }
 
@@ -82,6 +86,7 @@ EVENT App_CaptureEvent() {
 	// if(reader_drv_has_card()){
 	//	get card and set success or failure
 	// }
+	reader_drv_event();
 	swEvent sw_ev = switch_drv_pop_event();
 	if (sw_ev.event_type == SW_EVENT_CLICK) {
 		printf("EVENT: CLICK\n");
