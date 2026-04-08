@@ -34,15 +34,6 @@ const uint8_t WAITING[] = {SEG7_DP,	   SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_
 						   SEG7_BLANK, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP};
 const uint8_t WAITING_NUM = 14;
 
-typedef struct {
-	uint8_t *item;
-	uint8_t item_length;
-} MenuItem_t;
-
-const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD, .item_length = MENU_CARD_NUM},
-									 {.item = (uint8_t *) MENU_MANUAL, .item_length = MENU_MANUAL_NUM},
-									 {.item = (uint8_t *) MENU_INTENSITY, .item_length = MENU_INTENSITY_NUM}};
-
 /*  Forward declarations of state arrays */
 FSMState_t state_init[];
 FSMState_t state_menu_main[];
@@ -52,6 +43,17 @@ FSMState_t state_op_set_intensity[];
 FSMState_t state_input_pin[];
 FSMState_t state_success[];
 FSMState_t state_failure[];
+
+typedef struct {
+	uint8_t *item;
+	uint8_t item_length;
+	FSMState_t *next_state;
+} MenuItem_t;
+
+const MenuItem_t menu[MENU_ITEMS] = {
+	{.item = (uint8_t *) MENU_CARD, .item_length = MENU_CARD_NUM, .next_state = state_op_read_card},
+	{.item = (uint8_t *) MENU_MANUAL, .item_length = MENU_MANUAL_NUM, .next_state = state_op_input_card},
+	{.item = (uint8_t *) MENU_INTENSITY, .item_length = MENU_INTENSITY_NUM, .next_state = state_op_set_intensity}};
 
 /* ── Forward declarations of actions @todo missing */
 // obs! ojo con los timers, varias acciones tienen que stoppear or inicializarlos
@@ -92,7 +94,7 @@ FSMState_t state_menu_main[] = {{EV_ENC_CW, NULL, action_menu_next},
 
 FSMState_t state_op_read_card[] = {{EV_RCV_CARD_S, NULL, action_show_card},
 								   {EV_RCV_CARD_F, NULL, action_show_error_card},
-								   {EV_LONG_CLICK, NULL, action_do_nothing},
+								   {EV_LONG_CLICK, NULL, action_show_menu}, // go back to menu
 								   {TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_op_input_card[] = {{EV_ENC_CW, NULL, action_input_card_increment_dig},
@@ -139,7 +141,7 @@ void FSM_InitTable(void) {
 
 	state_menu_main[0].next_state = state_menu_main; // EV_ENC_CW
 	state_menu_main[1].next_state = state_menu_main; // EV_ENC_CCW
-	state_menu_main[2].next_state = state_menu_main; // EV_CLICK (action decides)
+	state_menu_main[2].next_state = NULL;			 // EV_CLICK (action decides the next state)
 	state_menu_main[3].next_state = state_menu_main; // EV_LONG_CLICK
 	state_menu_main[4].next_state = state_menu_main; // TABLE_END
 
@@ -207,18 +209,18 @@ static void action_do_nothing(void) {
 	/*/*/
 }
 static void action_menu_next(void) {
-	int new = (g_app_ctx.menu_selected == (MENU_ITEMS - 1) ? 0 : (g_app_ctx.menu_selected + 1));
-	g_app_ctx.menu_selected = new;
+	g_app_ctx.menu_selected = (g_app_ctx.menu_selected + 1) % MENU_ITEMS;
 	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_prev(void) {
-	int new = (g_app_ctx.menu_selected == 0 ? (MENU_ITEMS - 1) : (g_app_ctx.menu_selected - 1));
-	g_app_ctx.menu_selected = new;
+	g_app_ctx.menu_selected = (g_app_ctx.menu_selected - 1) % MENU_ITEMS;
+	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_select(void) {
 	printf("Selected menu item %d", g_app_ctx.menu_selected);
+	g_app_ctx.current_state = menu[g_app_ctx.menu_selected].next_state;
 }
 static void action_reset_retries(void) {
 }
