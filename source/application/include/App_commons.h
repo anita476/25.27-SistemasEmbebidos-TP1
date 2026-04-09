@@ -20,10 +20,18 @@ typedef struct {
 	bool operation_result;
 	uint8_t card_buff[ID_LENGHT];
 	uint8_t card_len;
+
+	uint8_t card_input[ID_LENGHT];
+	uint8_t card_input_len;
+	uint8_t card_input_ctr; /* how many card digits where writren*/
+	uint8_t card_curr_dig;
+
 	uint8_t pin[MAX_PIN_LENGTH];
 	uint8_t pin_ctr; /*how many pin digits were written*/
 	uint8_t pin_num;
 	uint8_t curr_dig;
+
+	bool manual;
 
 } AppContext_t;
 

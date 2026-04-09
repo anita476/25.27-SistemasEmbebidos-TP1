@@ -37,7 +37,10 @@ AppContext_t g_app_ctx = {.current_state = NULL, // set after initing tabl
 						  .display_intensity = 5,
 						  .operation_result = false,
 						  .card_len = 0,
-						  .pin_num = 0};
+						  .pin_num = 0,
+						  .card_input_ctr = 0,
+						  .card_input_len = ID_LENGHT,
+						  .manual = false};
 /*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
