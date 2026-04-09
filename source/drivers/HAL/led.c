@@ -20,30 +20,18 @@ bool led_drv_init(void) {
 	shift_register_drv_sel_led(LED_SEL_NONE);
 }
 
-/**
- * @brief Turn on the success status indicator led
- */
 void led_drv_on_success(void) {
 	shift_register_drv_sel_digit(SUCCESS_LED);
 }
 
-/**
- * @brief Turn off the success status indicator led
- */
 void led_drv_off_success(void) {
 	shift_register_drv_sel_digit(LED_SEL_NONE);
 }
 
-/**
- * @brief Start blinking the failure status indicator led at a steady rate
- */
 void led_drv_blink_failure(void) {
 	timer_drv_start(led_timer, LED_BLINK_PERIOD, TIM_MODE_PERIODIC, toggle_led);
 }
 
-/**
- * @brieg Stop blinking the failure status indicator led at a steady rate
- */
 void led_drv_stop_blink_failure(void) {
 	timer_drv_stop(led_timer);
 }

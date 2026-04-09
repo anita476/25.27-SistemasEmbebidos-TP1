@@ -77,25 +77,27 @@ static void action_show_card(void);
 static void action_show_error_card(void);
 static void action_intensity_increase(void);
 static void action_intensity_decrease(void);
-static void action_retry_or_fail(void);
 static void action_process_dig(void);
 static void action_rollback_card_num(void);
-static void action_stop_misc_timer_and_menu(void); /* in case we perform an action, stop timers to be safe */
+static void action_stop_misc_timer_and_menu(void);
 static void action_clear_display(void);
 static void action_set_init_pin(void);
 static void action_set_init_pin_manual(void);
 static void action_input_pin_increment_dig(void);
 static void action_input_pin_decrement_dig(void);
 static void action_rollback_pin_digit(void);
+
 static void preset_menu_card(void);
 static void preset_menu_manual(void);
 static void preset_menu_intensity(void);
 static void preset_failure_state(void);
 static void preset_success_state(void);
+
 static void action_input_card_increment(void);
 static void action_input_card_decrement(void);
 static void action_process_card_dig(void);
 static void action_show_card_manual(void);
+
 const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD,
 									  .item_length = MENU_CARD_NUM,
 									  .next_state = state_op_read_card,
@@ -153,6 +155,7 @@ FSMState_t state_input_pin[] = {{EV_ENC_CW, NULL, action_input_pin_increment_dig
 								{EV_ENC_CCW, NULL, action_input_pin_decrement_dig},
 								{EV_DOUBLE_CLICK, NULL, action_rollback_pin_digit},
 								{EV_CLICK, NULL, action_process_dig}, /* going to success or not is set frm here*/
+								{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
 								{TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_success[] = {{EV_TIMEOUT_MISC, NULL, action_show_greeting}, {TABLE_END, NULL, action_do_nothing}};
@@ -205,6 +208,7 @@ void FSM_InitTable(void) {
 	state_input_pin[1].next_state = state_input_pin; // EV_ENC_CCW
 	state_input_pin[2].next_state = state_input_pin; // EV_DOUBLE_CLICK
 	state_input_pin[3].next_state = NULL;			 // EV_CLICK
+	state_input_pin[4].next_state = state_menu_main; // EV_TIMEOUT_MISC_ERR
 	state_input_pin[4].next_state = state_input_pin; // TABLE_END
 
 	state_success[0].next_state = state_init;	 // EV_TIMEOUT_MISC
@@ -242,9 +246,11 @@ static void action_show_greeting(void) {
 }
 
 static void action_show_menu(void) {
-	/* reset pin also */
+	/* reset pins also */
 	g_app_ctx.pin_ctr = 0;
-	g_app_ctx.pin_ctr = 0;
+	g_app_ctx.card_input_ctr = 0;
+	g_app_ctx.curr_dig = 0;
+	g_app_ctx.card_curr_dig = 0;
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 
@@ -302,8 +308,7 @@ static void action_intensity_decrease(void) {
 	intensity_display[intensity_display_num - 1] = SEG7_DIGIT(g_app_ctx.display_intensity);
 	display_drv_write_word(intensity_display, intensity_display_num);
 }
-static void action_retry_or_fail(void) {
-}
+
 static void action_input_pin_increment_dig(void) {
 	g_app_ctx.curr_dig = (g_app_ctx.curr_dig + 1) % 10;
 	printf("Incremented: %d\n", g_app_ctx.curr_dig);
@@ -378,14 +383,15 @@ static void action_stop_misc_timer_and_menu() {
 }
 
 static void action_set_init_pin(void) {
-	/* start a long timer, 30-60 secs */
 	g_app_ctx.pin_num = auth_id_pin_len((uint8_t *) (g_app_ctx.card_buff));
 	g_app_ctx.pin_ctr = 0;
 	g_app_ctx.curr_dig = 0;
 	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
 	pin_display[0] = SEG7_0;
 	display_drv_write_word(pin_display, pin_display_num);
-	timer_drv_start(g_app_ctx.timer_misc, 60000, TIM_MODE_SINGLESHOT, NULL);
+	/* start a long timer, 30-60 sec, after which session expires */
+
+	timer_drv_start(g_app_ctx.timer_misc_err, 60000, TIM_MODE_SINGLESHOT, NULL);
 }
 static void action_clear_display(void) {
 	display_drv_write_word(CLR, CLR_NUM);
@@ -469,7 +475,6 @@ static void action_show_card_manual(void) {
 	}
 	timer_drv_start(g_app_ctx.timer_misc, 6000, TIM_MODE_SINGLESHOT, NULL);
 	display_drv_write_word(seg_buf, g_app_ctx.card_input_len);
-	printf("Printing successful manual card\n");
 }
 
 static void action_set_init_pin_manual(void) {
