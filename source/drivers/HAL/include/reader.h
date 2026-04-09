@@ -17,14 +17,16 @@ bool reader_drv_init(void);
 bool reader_drv_event(void);
 
 /**
- * @brief Returns a a card number, if one exists and hasnt been processed
- * @returns A pointer to an 8 char array if card exists , NULL if not
+ * @brief Returns a a card number by pointer, if one exists and hasnt been processed yet
+ * @param out_buf Pointer to the card buffer COPY.
+ * @param out_length Length of the buffer.
+ * @note Calling this function sets the event flag to false.
  */
-char *reader_drv_card(void);
+void reader_drv_card(uint8_t *out_buf, uint8_t *out_len);
 
 /********CODE DEFINITIONS ***************/
 
-#define ID_LENGHT 9U
+#define ID_LENGHT 8U
 
 // ISO/IEC 7811-6 Coded Characters
 

@@ -33,9 +33,10 @@ AppContext_t g_app_ctx = {.current_state = NULL, // set after initing tabl
 						  .retry_count = 3,
 						  .timer_timeout_block = TIMER_INVALID_ID,
 						  .timer_misc = TIMER_INVALID_ID,
-						  .display_intensity = 50,
+						  .display_intensity = 5,
 						  .operation_result = false,
-						  .pending_event = EV_NONE};
+						  .card_len = 0,
+						  .pin_num = 0};
 /*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
@@ -93,7 +94,6 @@ void App_Run(void) {
 static EVENT App_CaptureEvent() {
 	if (timer_drv_expired(g_app_ctx.timer_misc)) {
 		printf("EVENT: EV_TIMEOUT_MISC\n");
-
 		return EV_TIMEOUT_MISC;
 	}
 
@@ -102,9 +102,14 @@ static EVENT App_CaptureEvent() {
 		return EV_TIMEOUT_BLOCK_CTR;
 	}
 
+	if (timer_drv_expired(g_app_ctx.timer_misc_err)) {
+		printf("EVENT_ EV_TIMEOUT_MISC_ERROR\n");
+		return EV_TIMEOUT_MISC_ERROR;
+	}
 	// @todo add magnetic reading logic !
 	if (reader_drv_event()) {
 		printf("EVENT: RCV_CARD_S\n");
+		reader_drv_card(g_app_ctx.card_buff, &g_app_ctx.card_len);
 		return EV_RCV_CARD_S;
 	}
 	swEvent sw_ev = switch_drv_pop_event();

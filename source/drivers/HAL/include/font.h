@@ -90,7 +90,7 @@ static const uint8_t Seg7DigitCode[10] = {
  *   O   |   0  0  1  1  1  1  1  1  | 0x3F  | same as 0
  *   P   |   0  1  1  1  0  0  1  1  | 0x73  |
  *   Q   |   0  1  1  0  0  1  1  1  | 0x67  |
- *   R   |   0  1  0  1  0  0  0  1  | 0x51  | approximation
+ *   R   |   0  1  0  1  0  0  0  0  | 0x50  | approximation to r
  *   S   |   0  1  1  0  1  1  0  1  | 0x6D  | same as 5
  *   T   |   0  1  1  1  1  0  0  0  | 0x78  |
  *   U   |   0  0  1  1  1  1  1  0  | 0x3E  |
@@ -121,7 +121,7 @@ static const uint8_t Seg7AlphaCode[26] = {
 	0x3F, /* O */
 	0x73, /* P */
 	0x67, /* Q */
-	0x51, /* R */
+	0x50, /* R */
 	0x6D, /* S */
 	0x78, /* T */
 	0x3E, /* U */
@@ -173,7 +173,7 @@ static const uint8_t Seg7AlphaCode[26] = {
 #define SEG7_O 0x3F /* O */
 #define SEG7_P 0x73 /* P */
 #define SEG7_Q 0x67 /* Q */
-#define SEG7_R 0x51 /* R */
+#define SEG7_R 0x50 /* R */
 #define SEG7_S 0x6D /* S */
 #define SEG7_T 0x78 /* T */
 #define SEG7_U 0x3E /* U */

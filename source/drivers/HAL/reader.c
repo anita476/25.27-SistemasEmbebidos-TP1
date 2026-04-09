@@ -2,12 +2,13 @@
 #include "../MCAL/include/gpio.h"
 #include "include/board.h"
 #include <stdio.h>
+#include <string.h>
+
+#define CARD_NUM_DIGITS 8
+
 void card_Enable_ISR(void);
 void card_Clock_ISR(void);
-/*
-const uint8_t Codes[] = {CODED_0, CODED_1, CODED_2, CODED_3, CODED_4, CODED_5, CODED_6, CODED_7,
-						 CODED_8, CODED_9, CODED_A, CODED_B, CODED_C, CODED_D, CODED_E, CODED_F};
-*/
+
 volatile uint8_t buffer[ID_LENGHT];
 volatile int bit_count = 0;
 volatile int char_count = 0;
@@ -37,32 +38,31 @@ void process_raw(void) {
 		printf("[%d] raw=0x%02X dec=%d char=%c\n", i, buffer[i], buffer[i], buffer[i]);
 	}
 }
-
-// @todo COMPLETE THIS!
-bool reader_drv_event(void) {
-	if (card_ready) {
-		process_raw();
-		card_ready = false;
-		return true;
-	}
-	return false;
-}
-
-char *reader_drv_card(void) {
-	return NULL;
-}
-
-void card_Enable_ISR(void) {
-	if (reading_active) { // if it flickers ignore it while readin
-		return;
-	}
+static void reader_drv_reset(void) {
 	bit_count = 0;
 	char_count = 0;
 	temp_char = 0;
-	reading_active = false; // If the SS is read, flag becomes true and start writing in array
+	reading_active = false;
+	card_ready = false;
 }
 
-#define CARD_NUM_DIGITS 8
+bool reader_drv_event(void) {
+	return card_ready;
+}
+
+void reader_drv_card(uint8_t *out_buf, uint8_t *out_len) {
+	if (!card_ready) {
+		return;
+	}
+	process_raw();
+	*out_len = CARD_NUM_DIGITS; /* char count will be 19*/
+	memcpy(out_buf, (void *) buffer, CARD_NUM_DIGITS);
+	reader_drv_reset();
+}
+
+void card_Enable_ISR(void) {
+	reader_drv_reset();
+}
 
 void card_Clock_ISR(void) {
 	bool bit = !gpio_drv_read(PIN_CARD_DATA);

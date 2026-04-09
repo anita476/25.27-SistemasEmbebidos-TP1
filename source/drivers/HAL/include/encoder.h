@@ -11,7 +11,7 @@
 #include "../../MCAL/include/pisr.h"
 #include "board.h"
 
-#define ENC_PISR_PERIOD 5 // in ticks
+#define ENC_PISR_PERIOD 15 // in ticks
 
 #define ENC_MAX_PENDING_EVENTS 32
 

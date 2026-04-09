@@ -1,5 +1,6 @@
 #include "include/fsm_table.h"
 #include "../drivers/HAL/include/display.h"
+#include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
 #include <stdio.h>
@@ -20,14 +21,15 @@ const uint8_t CLR_NUM = 4;
 /* 1_ CARD */
 const uint8_t MENU_CARD[] = {SEG7_1, SEG7_DP, SEG7_BLANK, SEG7_C, SEG7_A, SEG7_R, SEG7_D};
 const uint8_t MENU_CARD_NUM = 7;
-
 /* 2_ INPUT*/
 const uint8_t MENU_MANUAL[] = {SEG7_2, SEG7_DP, SEG7_BLANK, SEG7_I, SEG7_N, SEG7_P, SEG7_U, SEG7_T};
 const uint8_t MENU_MANUAL_NUM = 8;
-
 /* 3_ INT.*/
 const uint8_t MENU_INTENSITY[] = {SEG7_3, SEG7_DP, SEG7_BLANK, SEG7_I, SEG7_N, SEG7_T, SEG7_DP};
 const uint8_t MENU_INTENSITY_NUM = 7;
+
+const uint8_t ID_AUTH_ERR[] = {SEG7_A, SEG7_U, SEG7_T, SEG7_H, SEG7_BLANK, SEG7_E, SEG7_R, SEG7_R};
+const uint8_t ID_AUTH_ERR_NUM = 8;
 
 /* .......   ........ */
 const uint8_t WAITING[] = {SEG7_DP,	   SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_BLANK,
@@ -73,8 +75,8 @@ static void action_input_card_increment_dig(void);
 static void action_input_card_decrement_dig(void);
 static void action_advance_card_num(void);
 static void action_rollback_card_num(void);
-static void action_stop_misc_timer_and_menu(); /* in case we perform an action, stop timer to be safe */
-static void action_clear_display();
+static void action_stop_misc_timer_and_menu(void); /* in case we perform an action, stop timers to be safe */
+static void action_clear_display(void);
 
 /*************************************************************************************************************************/
 /***********************************************  TRANSITIONS. **************************************************/
@@ -92,10 +94,14 @@ FSMState_t state_menu_main[] = {{EV_ENC_CW, NULL, action_menu_next},
 								{EV_LONG_CLICK, NULL, action_do_nothing},
 								{TABLE_END, NULL, action_do_nothing}};
 
-FSMState_t state_op_read_card[] = {{EV_RCV_CARD_S, NULL, action_show_card},
-								   {EV_RCV_CARD_F, NULL, action_show_error_card},
-								   {EV_LONG_CLICK, NULL, action_show_menu}, // go back to menu
-								   {TABLE_END, NULL, action_do_nothing}};
+/* FIRST OP ON MENU*/
+FSMState_t state_op_read_card[] = {
+	{EV_RCV_CARD_S, NULL, action_show_card},				 /* start a timer and print card*/
+	{EV_RCV_CARD_F, NULL, action_show_error_card},			 /* start a timer and print error*/
+	{EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu},	 // go back to menu, cancel wait
+	{EV_TIMEOUT_MISC, NULL, action_clear_display /*@todo*/}, /* we were showing card or failure , now show*/
+	{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
+	{TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_op_input_card[] = {{EV_ENC_CW, NULL, action_input_card_increment_dig},
 									{EV_ENC_CCW, NULL, action_input_card_decrement_dig},
@@ -130,6 +136,7 @@ void FSM_InitTable(void) {
 	/* TIMERS BEFORE INITING TABLES !*/
 	g_app_ctx.timer_timeout_block = timer_drv_get_id();
 	g_app_ctx.timer_misc = timer_drv_get_id();
+	g_app_ctx.timer_misc_err = timer_drv_get_id();
 
 	// todo: fix later if theres time
 
@@ -145,10 +152,12 @@ void FSM_InitTable(void) {
 	state_menu_main[3].next_state = state_menu_main; // EV_LONG_CLICK
 	state_menu_main[4].next_state = state_menu_main; // TABLE_END
 
-	state_op_read_card[0].next_state = state_input_pin;	   // EV_RCV_CARD_S
-	state_op_read_card[1].next_state = state_menu_main;	   // EV_RCV_CARD_F
+	state_op_read_card[0].next_state = state_op_read_card; // EV_RCV_CARD_S
+	state_op_read_card[1].next_state = state_op_read_card; // EV_RCV_CARD_F
 	state_op_read_card[2].next_state = state_menu_main;	   // EV_LONG_CLICK
-	state_op_read_card[3].next_state = state_op_read_card; // TABLE_END
+	state_op_read_card[3].next_state = state_input_pin;	   // EV_TIMEOUT_MISC -> for success!
+	state_op_input_card[4].next_state = state_menu_main;   // EV_TIMEOUT_MISC_ERROR -> for error card (unauth)
+	state_op_read_card[5].next_state = state_op_read_card; // TABLE_END
 
 	state_op_input_card[0].next_state = state_op_input_card; // EV_ENC_CW
 	state_op_input_card[1].next_state = state_op_input_card; // EV_ENC_CCW
@@ -210,23 +219,40 @@ static void action_do_nothing(void) {
 }
 static void action_menu_next(void) {
 	g_app_ctx.menu_selected = (g_app_ctx.menu_selected + 1) % MENU_ITEMS;
-	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected);
+	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected + 1);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_prev(void) {
-	g_app_ctx.menu_selected = (g_app_ctx.menu_selected - 1) % MENU_ITEMS;
-	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected);
+	if (g_app_ctx.menu_selected == 0)
+		g_app_ctx.menu_selected = MENU_ITEMS - 1;
+	else
+		g_app_ctx.menu_selected--;
+	printf("Switched to menu item: %d\n", g_app_ctx.menu_selected + 1);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_select(void) {
-	printf("Selected menu item %d", g_app_ctx.menu_selected);
+	printf("Selected menu item %d", g_app_ctx.menu_selected + 1);
 	g_app_ctx.current_state = menu[g_app_ctx.menu_selected].next_state;
+	/* set visual indicator, will only be seen w card waiting i think */
+	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
 }
 static void action_reset_retries(void) {
 }
 static void action_show_card(void) {
+	uint8_t seg_buf[ID_LENGHT];
+	/* need to translate chars to segment codes*/
+	for (int i = 0; i < g_app_ctx.card_len; i++) {
+		uint8_t digit = g_app_ctx.card_buff[i] - '0';
+		seg_buf[i] = SEG7_DIGIT(digit);
+	}
+	timer_drv_start(g_app_ctx.timer_misc, 7000, TIM_MODE_SINGLESHOT, NULL);
+	display_drv_write_word(seg_buf, g_app_ctx.card_len);
+	printf("Printing successful card\n");
 }
 static void action_show_error_card(void) {
+	timer_drv_start(g_app_ctx.timer_misc_err, 7000, TIM_MODE_SINGLESHOT, NULL);
+	display_drv_write_word((uint8_t *) ID_AUTH_ERR, ID_AUTH_ERR_NUM);
+	printf("Printing UNsuccessful card\n");
 }
 static void action_intensity_increase(void) {
 }
@@ -243,10 +269,11 @@ static void action_advance_card_num(void) {
 static void action_rollback_card_num(void) {
 }
 static void action_stop_misc_timer_and_menu() {
-	// stop timer,
+	// stop timerS,
 	timer_drv_stop(g_app_ctx.timer_misc);
+	timer_drv_stop(g_app_ctx.timer_misc_err);
 	// display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
-	printf("Stopped misc timer prematurely\n");
+	printf("Stopped misc timers prematurely\n");
 
 	action_show_menu();
 	// exit
