@@ -1,5 +1,6 @@
 #include "include/fsm_table.h"
 #include "../drivers/HAL/include/display.h"
+#include "../drivers/HAL/include/led.h"
 #include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
@@ -340,7 +341,6 @@ static void action_process_dig(void) {
 				return;
 			}
 			g_app_ctx.pin_ctr = 0;
-			printf("Authentication failed. Retry\n"); // @todo maybe try another timer to show image
 		}
 	}
 	g_app_ctx.current_state = state_input_pin;
@@ -409,17 +409,15 @@ static void preset_menu_intensity(void) {
 static void preset_failure_state(void) {
 	g_app_ctx.current_state = state_failure;
 	display_drv_write_word((uint8_t *) FAIL, FAIL_NUM);
-	// @todo "blink" the other led
-	// @todo , make a func that starts the led blinkign and put it inside timer...
-
-	timer_drv_start(g_app_ctx.timer_timeout_block, 10000, TIM_MODE_SINGLESHOT, NULL);
+	led_drv_blink_failure();
+	timer_drv_start(g_app_ctx.timer_timeout_block, 10000, TIM_MODE_SINGLESHOT, led_drv_stop_blink_failure);
 }
 static void preset_success_state(void) {
 	g_app_ctx.current_state = state_success;
 	display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
 	// @todo "blick" success led for 5 secs or smth
-	// led has to be ON for 5 secs
-	timer_drv_start(g_app_ctx.timer_misc, 5000, TIM_MODE_SINGLESHOT, NULL);
+	led_drv_on_success();
+	timer_drv_start(g_app_ctx.timer_misc, 5000, TIM_MODE_SINGLESHOT, led_drv_off_success);
 }
 
 static void action_input_card_increment(void) {
