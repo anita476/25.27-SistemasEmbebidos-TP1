@@ -36,6 +36,10 @@ const uint8_t WAITING[] = {SEG7_DP,	   SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_
 						   SEG7_BLANK, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP, SEG7_DP};
 const uint8_t WAITING_NUM = 14;
 
+/*************** NON CONSTANT ARRAYS FOR DISPLAYS */
+uint8_t intensity_display[] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
+uint8_t intensity_display_num = 4;
+
 /*  Forward declarations of state arrays */
 FSMState_t state_init[];
 FSMState_t state_menu_main[];
@@ -50,12 +54,8 @@ typedef struct {
 	uint8_t *item;
 	uint8_t item_length;
 	FSMState_t *next_state;
+	void (*preset_fun)(void);
 } MenuItem_t;
-
-const MenuItem_t menu[MENU_ITEMS] = {
-	{.item = (uint8_t *) MENU_CARD, .item_length = MENU_CARD_NUM, .next_state = state_op_read_card},
-	{.item = (uint8_t *) MENU_MANUAL, .item_length = MENU_MANUAL_NUM, .next_state = state_op_input_card},
-	{.item = (uint8_t *) MENU_INTENSITY, .item_length = MENU_INTENSITY_NUM, .next_state = state_op_set_intensity}};
 
 /* ── Forward declarations of actions @todo missing */
 // obs! ojo con los timers, varias acciones tienen que stoppear or inicializarlos
@@ -77,6 +77,23 @@ static void action_advance_card_num(void);
 static void action_rollback_card_num(void);
 static void action_stop_misc_timer_and_menu(void); /* in case we perform an action, stop timers to be safe */
 static void action_clear_display(void);
+
+static void preset_menu_card();
+static void preset_menu_manual();
+static void preset_menu_intensity();
+
+const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD,
+									  .item_length = MENU_CARD_NUM,
+									  .next_state = state_op_read_card,
+									  .preset_fun = preset_menu_card},
+									 {.item = (uint8_t *) MENU_MANUAL,
+									  .item_length = MENU_MANUAL_NUM,
+									  .next_state = state_op_input_card,
+									  .preset_fun = preset_menu_manual},
+									 {.item = (uint8_t *) MENU_INTENSITY,
+									  .item_length = MENU_INTENSITY_NUM,
+									  .next_state = state_op_set_intensity,
+									  .preset_fun = preset_menu_intensity}};
 
 /*************************************************************************************************************************/
 /***********************************************  TRANSITIONS. **************************************************/
@@ -233,8 +250,7 @@ static void action_menu_prev(void) {
 static void action_menu_select(void) {
 	printf("Selected menu item %d", g_app_ctx.menu_selected + 1);
 	g_app_ctx.current_state = menu[g_app_ctx.menu_selected].next_state;
-	/* set visual indicator, will only be seen w card waiting i think */
-	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
+	(menu[g_app_ctx.menu_selected].preset_fun)();
 }
 static void action_reset_retries(void) {
 }
@@ -255,8 +271,19 @@ static void action_show_error_card(void) {
 	printf("Printing UNsuccessful card\n");
 }
 static void action_intensity_increase(void) {
+	if (g_app_ctx.display_intensity < MAX_INTENSITY)
+		g_app_ctx.display_intensity++;
+	display_drv_set_intensity(g_app_ctx.display_intensity);
+	intensity_display[intensity_display_num - 1] = SEG7_DIGIT(g_app_ctx.display_intensity);
+	display_drv_write_word(intensity_display, intensity_display_num);
 }
+
 static void action_intensity_decrease(void) {
+	if (g_app_ctx.display_intensity > MIN_INTENSITY)
+		g_app_ctx.display_intensity--;
+	display_drv_set_intensity(g_app_ctx.display_intensity);
+	intensity_display[intensity_display_num - 1] = SEG7_DIGIT(g_app_ctx.display_intensity);
+	display_drv_write_word(intensity_display, intensity_display_num);
 }
 static void action_retry_or_fail(void) {
 }
@@ -281,4 +308,15 @@ static void action_stop_misc_timer_and_menu() {
 
 static void action_clear_display() {
 	display_drv_write_word(CLR, CLR_NUM);
+}
+
+static void preset_menu_card() {
+	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
+}
+static void preset_menu_manual() {
+	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
+}
+static void preset_menu_intensity() {
+	intensity_display[intensity_display_num - 1] = SEG7_DIGIT(g_app_ctx.display_intensity);
+	display_drv_write_word(intensity_display, intensity_display_num);
 }
