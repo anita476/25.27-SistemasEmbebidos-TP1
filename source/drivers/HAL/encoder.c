@@ -56,6 +56,7 @@ encStep_t encoder_drv_pop_event() {
 pisrCallbackPtr_t encoder_drv_PISR(void) {
 	uint8_t current = (gpio_drv_read(channel_pins.channelA) << 1) | gpio_drv_read(channel_pins.channelB);
 	uint8_t index = (previous << 2) | current;
+
 	switch (index) {
 		case 0b1110: //
 			_encoder_drv_push_event(ENC_CW);

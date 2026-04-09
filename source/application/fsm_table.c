@@ -40,6 +40,9 @@ const uint8_t WAITING_NUM = 14;
 uint8_t intensity_display[] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
 uint8_t intensity_display_num = 4;
 
+uint8_t pin_display[] = {SEG7_BLANK, SEG7_DP, SEG7_BLANK, SEG7_BLANK};
+uint8_t pin_display_num = 4;
+
 /*  Forward declarations of state arrays */
 FSMState_t state_init[];
 FSMState_t state_menu_main[];
@@ -71,17 +74,19 @@ static void action_show_error_card(void);
 static void action_intensity_increase(void);
 static void action_intensity_decrease(void);
 static void action_retry_or_fail(void);
-static void action_input_card_increment_dig(void);
-static void action_input_card_decrement_dig(void);
-static void action_advance_card_num(void);
+static void action_process_dig(void);
 static void action_rollback_card_num(void);
 static void action_stop_misc_timer_and_menu(void); /* in case we perform an action, stop timers to be safe */
 static void action_clear_display(void);
-
-static void preset_menu_card();
-static void preset_menu_manual();
-static void preset_menu_intensity();
-
+static void action_set_init_pin(void);
+static void action_input_pin_increment_dig(void);
+static void action_input_pin_decrement_dig(void);
+static void action_rollback_pin_digit(void);
+static void preset_menu_card(void);
+static void preset_menu_manual(void);
+static void preset_menu_intensity(void);
+static void preset_failure_state(void);
+static void preset_success_state(void);
 const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD,
 									  .item_length = MENU_CARD_NUM,
 									  .next_state = state_op_read_card,
@@ -113,22 +118,19 @@ FSMState_t state_menu_main[] = {{EV_ENC_CW, NULL, action_menu_next},
 
 /* FIRST OP ON MENU*/
 FSMState_t state_op_read_card[] = {
-	{EV_RCV_CARD_S, NULL, action_show_card},				 /* start a timer and print card*/
-	{EV_RCV_CARD_F, NULL, action_show_error_card},			 /* start a timer and print error*/
-	{EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu},	 // go back to menu, cancel wait
-	{EV_TIMEOUT_MISC, NULL, action_clear_display /*@todo*/}, /* we were showing card or failure , now show*/
+	{EV_RCV_CARD_S, NULL, action_show_card},				/* start a timer and print card*/
+	{EV_RCV_CARD_F, NULL, action_show_error_card},			/* start a timer and print error*/
+	{EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu}, // go back to menu, cancel wait
+	{EV_TIMEOUT_MISC, NULL, action_set_init_pin},			/* we were showing card or failure , now show*/
 	{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
 	{TABLE_END, NULL, action_do_nothing}};
 
-FSMState_t state_op_input_card[] = {{EV_ENC_CW, NULL, action_input_card_increment_dig},
-									{EV_ENC_CCW, NULL, action_input_card_decrement_dig},
-									{EV_CLICK, NULL, action_advance_card_num},
-									{EV_DOUBLE_CLICK, NULL, action_rollback_card_num},
-									{EV_SUCCESS, NULL, action_show_card},
-									{EV_RCV_CARD_F, NULL, action_retry_or_fail},
-									{EV_END_TRIES, NULL, action_show_error_card},
-									{EV_LONG_CLICK, NULL, action_show_menu},
-									{TABLE_END, NULL, action_do_nothing}};
+FSMState_t state_op_input_card[] = {
+	{EV_ENC_CW, NULL, action_do_nothing},		  {EV_ENC_CCW, NULL, action_do_nothing},
+	{EV_CLICK, NULL, action_process_dig},		  {EV_DOUBLE_CLICK, NULL, action_rollback_card_num},
+	{EV_SUCCESS, NULL, action_show_card},		  {EV_RCV_CARD_F, NULL, action_retry_or_fail},
+	{EV_END_TRIES, NULL, action_show_error_card}, {EV_LONG_CLICK, NULL, action_show_menu},
+	{TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_op_set_intensity[] = {{EV_ENC_CW, NULL, action_intensity_increase},
 									   {EV_ENC_CCW, NULL, action_intensity_decrease},
@@ -136,18 +138,15 @@ FSMState_t state_op_set_intensity[] = {{EV_ENC_CW, NULL, action_intensity_increa
 									   {EV_LONG_CLICK, NULL, action_show_menu},
 									   {TABLE_END, NULL, action_do_nothing}};
 
-FSMState_t state_input_pin[] = {{EV_ENC_CW, NULL, action_input_card_increment_dig},
-								{EV_ENC_CCW, NULL, action_input_card_decrement_dig},
-								{EV_CLICK, NULL, action_advance_card_num},
-								{EV_SUCCESS, NULL, action_show_card},
-								{EV_RCV_CARD_F, NULL, action_retry_or_fail},
-								{EV_END_TRIES, NULL, action_show_error_card},
-								{EV_LONG_CLICK, NULL, action_show_menu},
+FSMState_t state_input_pin[] = {{EV_ENC_CW, NULL, action_input_pin_increment_dig},
+								{EV_ENC_CCW, NULL, action_input_pin_decrement_dig},
+								{EV_DOUBLE_CLICK, NULL, action_rollback_pin_digit},
+								{EV_CLICK, NULL, action_process_dig}, /* going to success or not is set frm here*/
 								{TABLE_END, NULL, action_do_nothing}};
 
-FSMState_t state_success[] = {{EV_TIMEOUT_MISC, NULL, action_show_menu}, {TABLE_END, NULL, action_do_nothing}};
+FSMState_t state_success[] = {{EV_TIMEOUT_MISC, NULL, action_show_greeting}, {TABLE_END, NULL, action_do_nothing}};
 
-FSMState_t state_failure[] = {{EV_TIMEOUT_BLOCK_CTR, NULL, action_show_menu}, {TABLE_END, NULL, action_do_nothing}};
+FSMState_t state_failure[] = {{EV_TIMEOUT_BLOCK_CTR, NULL, action_show_greeting}, {TABLE_END, NULL, action_do_nothing}};
 
 void FSM_InitTable(void) {
 	/* TIMERS BEFORE INITING TABLES !*/
@@ -194,12 +193,9 @@ void FSM_InitTable(void) {
 
 	state_input_pin[0].next_state = state_input_pin; // EV_ENC_CW
 	state_input_pin[1].next_state = state_input_pin; // EV_ENC_CCW
-	state_input_pin[2].next_state = state_input_pin; // EV_CLICK
-	state_input_pin[3].next_state = state_success;	 // EV_SUCCESS
-	state_input_pin[4].next_state = state_input_pin; // EV_RCV_CARD_F
-	state_input_pin[5].next_state = state_failure;	 // EV_END_TRIES
-	state_input_pin[6].next_state = state_menu_main; // EV_LONG_CLICK
-	state_input_pin[7].next_state = state_input_pin; // TABLE_END
+	state_input_pin[2].next_state = state_input_pin; // EV_DOUBLE_CLICK
+	state_input_pin[3].next_state = NULL;			 // EV_CLICK
+	state_input_pin[4].next_state = state_input_pin; // TABLE_END
 
 	state_success[0].next_state = state_init;	 // EV_TIMEOUT_MISC
 	state_success[1].next_state = state_success; // TABLE_END
@@ -228,6 +224,9 @@ static void action_show_greeting(void) {
 }
 
 static void action_show_menu(void) {
+	/* reset pin also */
+	g_app_ctx.pin_ctr = 0;
+	g_app_ctx.pin_ctr = 0;
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 
@@ -287,36 +286,104 @@ static void action_intensity_decrease(void) {
 }
 static void action_retry_or_fail(void) {
 }
-static void action_input_card_increment_dig(void) {
+static void action_input_pin_increment_dig(void) {
+	g_app_ctx.curr_dig = (g_app_ctx.curr_dig + 1) % 9;
+	printf("Incremented: %d\n", g_app_ctx.curr_dig);
+	pin_display[pin_display_num - 1] = SEG7_DIGIT(g_app_ctx.curr_dig);
+	display_drv_write_word(pin_display, pin_display_num);
 }
-static void action_input_card_decrement_dig(void) {
+static void action_input_pin_decrement_dig(void) {
+	if (g_app_ctx.curr_dig == 0)
+		g_app_ctx.curr_dig = 9;
+	else
+		g_app_ctx.curr_dig--;
+	printf("Decremented: %d\n", g_app_ctx.curr_dig);
+	pin_display[pin_display_num - 1] = SEG7_DIGIT(g_app_ctx.curr_dig);
+	display_drv_write_word(pin_display, pin_display_num);
 }
-static void action_advance_card_num(void) {
+static void action_process_dig(void) {
+	g_app_ctx.pin[g_app_ctx.pin_ctr++] = g_app_ctx.curr_dig;
+	printf("Processing digit:%d\n", g_app_ctx.curr_dig);
+	g_app_ctx.curr_dig = 0;
+	if (g_app_ctx.pin_ctr == g_app_ctx.pin_num) {
+		// compare, and set the new state to success or retry !
+		if (auth_id_pin_match(g_app_ctx.card_buff, g_app_ctx.pin, g_app_ctx.pin_num)) {
+			preset_success_state();
+			return;
+		} else {
+			g_app_ctx.retry_count--;
+			if (g_app_ctx.retry_count == 0) {
+				preset_failure_state();
+				return;
+			}
+			g_app_ctx.pin_ctr = 0;
+			printf("Authentication failed. Retry\n"); // @todo maybe try another timer to show image
+		}
+	}
+	g_app_ctx.current_state = state_input_pin;
+	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
+	pin_display[0] = SEG7_DIGIT(g_app_ctx.pin_ctr);
+	display_drv_write_word(pin_display, pin_display_num);
 }
+static void action_rollback_pin_digit(void) {
+	if (g_app_ctx.pin_ctr == 0) {
+		return;
+	}
+	g_app_ctx.pin_ctr--;
+	g_app_ctx.curr_dig = 0;
+	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
+	pin_display[0] = SEG7_DIGIT(g_app_ctx.pin_ctr);
+	display_drv_write_word(pin_display, pin_display_num);
+}
+
 static void action_rollback_card_num(void) {
 }
 static void action_stop_misc_timer_and_menu() {
 	// stop timerS,
 	timer_drv_stop(g_app_ctx.timer_misc);
 	timer_drv_stop(g_app_ctx.timer_misc_err);
-	// display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
-	printf("Stopped misc timers prematurely\n");
-
 	action_show_menu();
 	// exit
 }
 
-static void action_clear_display() {
+static void action_set_init_pin(void) {
+	/* start a long timer, 30-60 secs */
+	g_app_ctx.pin_num = auth_id_pin_len((uint8_t *) (g_app_ctx.card_buff));
+	g_app_ctx.pin_ctr = 0;
+	g_app_ctx.curr_dig = 0;
+	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
+	pin_display[0] = SEG7_0;
+	display_drv_write_word(pin_display, pin_display_num);
+	timer_drv_start(g_app_ctx.timer_misc, 60000, TIM_MODE_SINGLESHOT, NULL);
+}
+
+static void action_clear_display(void) {
 	display_drv_write_word(CLR, CLR_NUM);
 }
 
-static void preset_menu_card() {
+static void preset_menu_card(void) {
 	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
 }
-static void preset_menu_manual() {
+static void preset_menu_manual(void) {
 	display_drv_write_word((uint8_t *) WAITING, WAITING_NUM);
 }
-static void preset_menu_intensity() {
+static void preset_menu_intensity(void) {
 	intensity_display[intensity_display_num - 1] = SEG7_DIGIT(g_app_ctx.display_intensity);
 	display_drv_write_word(intensity_display, intensity_display_num);
+}
+
+static void preset_failure_state(void) {
+	g_app_ctx.current_state = state_failure;
+	display_drv_write_word((uint8_t *) FAIL, FAIL_NUM);
+	// @todo "blink" the other led
+	// @todo , make a func that starts the led blinkign and put it inside timer...
+
+	timer_drv_start(g_app_ctx.timer_timeout_block, 10000, TIM_MODE_SINGLESHOT, NULL);
+}
+static void preset_success_state(void) {
+	g_app_ctx.current_state = state_success;
+	display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
+	// @todo "blick" success led for 5 secs or smth
+	// led has to be ON for 5 secs
+	timer_drv_start(g_app_ctx.timer_misc, 5000, TIM_MODE_SINGLESHOT, NULL);
 }

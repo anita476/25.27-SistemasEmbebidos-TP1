@@ -2,15 +2,17 @@
 #define _APP_COMMONS_H_
 #include "../../drivers/HAL/include/font.h"
 #include "../../drivers/HAL/include/reader.h"
+#include "auth.h"
 #include "fsm.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAX_ATTEMPTS 3
 typedef struct {
 	FSMState_t *current_state;
 	uint8_t menu_selected;
-	int retry_count;
+	int retry_count; /* how many timer WERE tried */
 	uint8_t timer_timeout_block;
 	uint8_t timer_misc;
 	uint8_t timer_misc_err;
@@ -18,7 +20,10 @@ typedef struct {
 	bool operation_result;
 	uint8_t card_buff[ID_LENGHT];
 	uint8_t card_len;
-	uint8_t pin_num; /* could b 4 or 5*/
+	uint8_t pin[MAX_PIN_LENGTH];
+	uint8_t pin_ctr; /*how many pin digits were written*/
+	uint8_t pin_num;
+	uint8_t curr_dig;
 
 } AppContext_t;
 

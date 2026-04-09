@@ -169,7 +169,7 @@ static const uint8_t Seg7AlphaCode[26] = {
 #define SEG7_K 0x75 /* K */
 #define SEG7_L 0x38 /* L */
 #define SEG7_M 0x25 /* M */
-#define SEG7_N 0x55 /* N */
+#define SEG7_N 0x54 /* N */
 #define SEG7_O 0x3F /* O */
 #define SEG7_P 0x73 /* P */
 #define SEG7_Q 0x67 /* Q */

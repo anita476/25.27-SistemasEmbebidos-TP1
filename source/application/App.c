@@ -99,7 +99,7 @@ static EVENT App_CaptureEvent() {
 	}
 
 	if (timer_drv_expired(g_app_ctx.timer_timeout_block)) {
-		printf("EVENT: EV_TIMEOUT_CTR\n");
+		printf("EVENT: EV_TIMEOUT_BLOCK\n");
 		return EV_TIMEOUT_BLOCK_CTR;
 	}
 
@@ -132,11 +132,11 @@ static EVENT App_CaptureEvent() {
 
 	encoderDir enc_ev = encoder_drv_pop_event();
 	if (enc_ev == ENC_CW) {
-		printf("EVENT: ENC_CW\n");
+		// printf("EVENT: ENC_CW\n");
 		return EV_ENC_CW;
 	}
 	if (enc_ev == ENC_CCW) {
-		printf("EVENT: ENC_CCW\n");
+		// printf("EVENT: ENC_CCW\n");
 		return EV_ENC_CCW;
 	}
 
