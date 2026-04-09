@@ -16,6 +16,7 @@
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
+#include "include/auth.h"
 #include "include/fsm_table.h"
 
 #include <stdio.h>
@@ -106,11 +107,14 @@ static EVENT App_CaptureEvent() {
 		printf("EVENT_ EV_TIMEOUT_MISC_ERROR\n");
 		return EV_TIMEOUT_MISC_ERROR;
 	}
-	// @todo add magnetic reading logic !
 	if (reader_drv_event()) {
-		printf("EVENT: RCV_CARD_S\n");
 		reader_drv_card(g_app_ctx.card_buff, &g_app_ctx.card_len);
-		return EV_RCV_CARD_S;
+		if (auth_id_exists((uint8_t *) g_app_ctx.card_buff)) {
+			printf("EVENT: RCV_CARD_S\n");
+			return EV_RCV_CARD_S;
+		}
+		printf("EVENT: RCV_CARD_F\n");
+		return EV_RCV_CARD_F;
 	}
 	swEvent sw_ev = switch_drv_pop_event();
 	if (sw_ev.event_type == SW_EVENT_CLICK) {
