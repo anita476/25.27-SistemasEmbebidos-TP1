@@ -56,9 +56,9 @@
 #define DISPLAY_SEG_ACTIVE HIGH
 
 #define SR_DATA PORTNUM2PIN(PD, 1) // serial data in
-#define SR_SCLK PORTNUM2PIN(PD, 3) // shift clock
+#define SR_SCLK PORTNUM2PIN(PD, 0) // shift clock
 #define SR_LATCH PORTNUM2PIN(PD, 2)
-#define SR_DEC_OE PORTNUM2PIN(PD, 0) // output enable for selectors! (probs unused ..)
+#define SR_DEC_OE PORTNUM2PIN(PD, 3) // output enable for selectors! (probs unused ..)
 #define SR_SEG_OE PORTNUM2PIN(PC, 4) // output enable for SEGMENTS
 
 #endif /* _BOARD_H_ */
