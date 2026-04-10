@@ -5,6 +5,7 @@
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
 #include <stdio.h>
+#include <string.h>
 
 /****************************CONST DECLARATION OF DISPLAY ARRAYS ********************************************/
 const uint8_t GREETING[] = {SEG7_H, SEG7_E, SEG7_L, SEG7_L, SEG7_O, SEG7_EXCL};
@@ -44,7 +45,7 @@ uint8_t intensity_display_num = 4;
 uint8_t pin_display[] = {SEG7_BLANK, SEG7_DP, SEG7_BLANK, SEG7_BLANK};
 uint8_t pin_display_num = 4;
 
-uint8_t card_display[] = {SEG7_BLANK, SEG7_DP, SEG7_BLANK, SEG7_BLANK};
+uint8_t card_display[] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
 uint8_t card_display_num = 4;
 
 /*  Forward declarations of state arrays */
@@ -64,8 +65,7 @@ typedef struct {
 	void (*preset_fun)(void);
 } MenuItem_t;
 
-/* ── Forward declarations of actions @todo missing */
-// obs! ojo con los timers, varias acciones tienen que stoppear or inicializarlos
+/* ── Forward declarations of actions*/
 static void action_show_greeting();
 static void action_show_menu(void);
 static void action_do_nothing(void);
@@ -98,6 +98,7 @@ static void action_input_card_decrement(void);
 static void action_process_card_dig(void);
 static void action_show_card_manual(void);
 
+static void _helper_refresh_card_display(bool show_cursor);
 const MenuItem_t menu[MENU_ITEMS] = {{.item = (uint8_t *) MENU_CARD,
 									  .item_length = MENU_CARD_NUM,
 									  .next_state = state_op_read_card,
@@ -168,7 +169,7 @@ void FSM_InitTable(void) {
 	g_app_ctx.timer_misc = timer_drv_get_id();
 	g_app_ctx.timer_misc_err = timer_drv_get_id();
 
-	// todo: fix later if theres time
+	// @todo: fix later if theres time
 
 	state_init[0].next_state = state_menu_main;
 	state_init[1].next_state = state_menu_main;
@@ -245,6 +246,11 @@ static void action_show_greeting(void) {
 	g_app_ctx.pin_ctr = 0;
 	g_app_ctx.curr_dig = 0;
 	g_app_ctx.menu_selected = 0;
+	memset(g_app_ctx.card_input, 0, ID_LENGTH);
+	memset(g_app_ctx.pin, 0, MAX_PIN_LENGTH);
+	for (int i = 0; i < card_display_num; i++) {
+		card_display[i] = SEG7_BLANK;
+	}
 
 	// start timer
 	timer_drv_start(g_app_ctx.timer_misc, 3000, TIM_MODE_SINGLESHOT, NULL);
@@ -351,7 +357,7 @@ static void action_process_dig(void) {
 		} else {
 			g_app_ctx.retry_count--;
 			/* restart timeout for pin input*/
-			timer_drv_start(g_app_ctx.timer_misc_err, 60000, TIM_MODE_SINGLESHOT, NULL);
+			timer_drv_start(g_app_ctx.timer_misc_err, 30000, TIM_MODE_SINGLESHOT, NULL);
 
 			if (g_app_ctx.retry_count == 0) {
 				preset_failure_state();
@@ -382,9 +388,7 @@ static void action_rollback_card_num(void) {
 	}
 	g_app_ctx.card_input_ctr--;
 	g_app_ctx.card_curr_dig = 0;
-	card_display[card_display_num - 1] = SEG7_UNDERSCORE;
-	card_display[0] = SEG7_DIGIT(g_app_ctx.card_input_ctr);
-	display_drv_write_word(card_display, card_display_num);
+	_helper_refresh_card_display(true);
 }
 static void action_stop_misc_timer_and_menu() {
 	// stop timerS,
@@ -414,7 +418,7 @@ static void preset_menu_card(void) {
 }
 static void preset_menu_manual(void) {
 	g_app_ctx.manual = true;
-	card_display[0] = SEG7_DIGIT(g_app_ctx.card_input_ctr);
+	// card_display[0] = SEG7_DIGIT(g_app_ctx.card_input_ctr);
 	card_display[card_display_num - 1] = SEG7_UNDERSCORE;
 	display_drv_write_word((uint8_t *) card_display, card_display_num);
 }
@@ -427,30 +431,25 @@ static void preset_failure_state(void) {
 	g_app_ctx.current_state = state_failure;
 	display_drv_write_word((uint8_t *) FAIL, FAIL_NUM);
 	led_drv_blink_failure();
-	timer_drv_start(g_app_ctx.timer_timeout_block, 10000, TIM_MODE_SINGLESHOT, led_drv_stop_blink_failure);
+	timer_drv_start(g_app_ctx.timer_timeout_block, 60000, TIM_MODE_SINGLESHOT, led_drv_stop_blink_failure);
 }
 static void preset_success_state(void) {
 	g_app_ctx.current_state = state_success;
 	display_drv_write_word((uint8_t *) OPEN, OPEN_NUM);
-	// @todo "blick" success led for 5 secs or smth
 	led_drv_on_success();
 	timer_drv_start(g_app_ctx.timer_misc, 5000, TIM_MODE_SINGLESHOT, led_drv_off_success);
 }
 
 static void action_input_card_increment(void) {
 	g_app_ctx.card_curr_dig = (g_app_ctx.card_curr_dig + 1) % 10;
-	printf("Incremented card: %d\n", g_app_ctx.card_curr_dig);
-	card_display[card_display_num - 1] = SEG7_DIGIT(g_app_ctx.card_curr_dig);
-	display_drv_write_word(card_display, card_display_num);
+	_helper_refresh_card_display(false);
 }
 static void action_input_card_decrement(void) {
 	if (g_app_ctx.card_curr_dig == 0)
 		g_app_ctx.card_curr_dig = 9;
 	else
 		g_app_ctx.card_curr_dig--;
-	printf("Decremented card: %d\n", g_app_ctx.curr_dig);
-	card_display[card_display_num - 1] = SEG7_DIGIT(g_app_ctx.card_curr_dig);
-	display_drv_write_word(card_display, card_display_num);
+	_helper_refresh_card_display(false);
 }
 static void action_process_card_dig(void) {
 	/* auth expects a stirng */
@@ -472,9 +471,7 @@ static void action_process_card_dig(void) {
 		}
 	}
 	g_app_ctx.current_state = state_op_input_card;
-	card_display[card_display_num - 1] = SEG7_UNDERSCORE;
-	card_display[0] = SEG7_DIGIT(g_app_ctx.card_input_ctr);
-	display_drv_write_word(card_display, card_display_num);
+	_helper_refresh_card_display(true);
 }
 
 static void action_show_card_manual(void) {
@@ -496,5 +493,19 @@ static void action_set_init_pin_manual(void) {
 	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
 	pin_display[0] = SEG7_0;
 	display_drv_write_word(pin_display, pin_display_num);
-	timer_drv_start(g_app_ctx.timer_misc, 60000, TIM_MODE_SINGLESHOT, NULL);
+	timer_drv_start(g_app_ctx.timer_misc, 30000, TIM_MODE_SINGLESHOT, NULL);
+}
+
+static void _helper_refresh_card_display(bool show_cursor) {
+	uint8_t ctr = g_app_ctx.card_input_ctr;
+	for (int i = 0; i < 3; i++) {
+		int src = (int) ctr - (3 - i);
+		if (src < 0) {
+			card_display[i] = SEG7_BLANK;
+		} else {
+			card_display[i] = SEG7_DIGIT(g_app_ctx.card_input[src] - '0');
+		}
+	}
+	card_display[3] = show_cursor ? SEG7_UNDERSCORE : SEG7_DIGIT(g_app_ctx.card_curr_dig);
+	display_drv_write_word(card_display, 4);
 }

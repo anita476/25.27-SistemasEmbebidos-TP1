@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// @todo ask if shift register should be agnostic ? maybe an intermidate layer?
 // MC74HC139.h will be absorbed by this drv, since it has the mask
 
 typedef enum { LED_SEL_NONE = 0, LED_SEL_FIRST = 1, LED_SEL_SECOND = 2, LED_SEL_THIRD = 3 } LED_SELECTION;

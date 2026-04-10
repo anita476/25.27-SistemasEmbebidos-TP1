@@ -37,7 +37,6 @@ bool encoder_drv_init();
 /**
  * @brief Pop an event from the encoder event queue. Queue is circular with max ENC_MAX_PENDING_EVENTS, otherwise
  * overwrites
- * @todo preguntar sobre la queue ciruclar
  * @returns 1 for a clockwise step, -1 for counter clockwise. Returns 0 if queue is empty.
  */
 encStep_t encoder_drv_pop_event();
