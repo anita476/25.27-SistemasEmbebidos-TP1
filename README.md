@@ -22,11 +22,11 @@
 >
 > `A (data)` to `PTD1`
 >
-> `SCLK` to `PTD3`
+> `SCLK` to `PTD0`
 >
 > `LCLK` to `PTD2`
 >
-> `OE`  to `PTD0`
+> `OE`  to `PTD3`
 
 > **Card reader pin assignments**
 > 
