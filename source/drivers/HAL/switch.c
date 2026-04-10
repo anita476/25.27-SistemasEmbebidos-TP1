@@ -12,7 +12,7 @@
 static swEvent queue[SW_MAX_PENDING_EVENTS];
 static volatile uint8_t _head = 0;
 static volatile uint8_t _tail = 0;
-
+static bool initialized = false;
 typedef enum {
 	SW_STATE_IDLE,
 	SW_STATE_DEBOUNCE,
@@ -43,7 +43,11 @@ static void _switch_drv_process_event(uint8_t i);
 pisrCallbackPtr_t switch_drv_PISR(void);
 
 void switch_drv_init() {
+	if (initialized) {
+		return;
+	}
 	pisr_drv_register((pisrCallbackPtr_t) switch_drv_PISR, 1);
+	initialized = true;
 }
 sw_handle_t switch_drv_register(uint8_t pin, ACTIVE_ON active_level, PULL pullconfig) {
 	if (sw_count >= SW_MAX_SWS)

@@ -8,7 +8,6 @@
  * INCLUDE HEADER FILES
  ******************************************************************************/
 #include "../../SDK/CMSIS/fsl_device_registers.h"
-#include "../drivers/HAL/include/board.h"
 #include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
 #include "../drivers/HAL/include/led.h"
@@ -53,27 +52,10 @@ static EVENT App_CaptureEvent();
 /* interrupts are disabled at this point*/
 void App_Init(void) {
 	timer_drv_init();
-	switch_drv_init();
 	encoder_drv_init();
 	display_drv_init();
 	reader_drv_init();
 	led_drv_init();
-
-	uint8_t display_intensity = MAX_INTENSITY;
-	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,
-					  SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A')};
-	uint8_t word2[DIG_NUM] = {SEG7_BLANK, SEG7_CHAR('H'), SEG7_CHAR('I'), SEG7_EXCL};
-
-	uint8_t nothing[DIG_NUM] = {SEG7_BLANK, SEG7_BLANK, SEG7_BLANK, SEG7_BLANK};
-
-	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
-	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
-								printf("Initialized sw in pin: %d\n", PIN_SW_ENC);
-
-	sw_handle_t btn2 = switch_drv_register(PIN_SW3, ACTIVE_ON_LOW, PULL_UP);
-	btn2 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW3) :
-								printf("Initialized sw in pin: %d\n", PIN_SW3);
-
 	FSM_InitTable();
 
 	// initial state
