@@ -81,49 +81,39 @@ void App_Run(void) {
 
 static EVENT App_CaptureEvent() {
 	if (timer_drv_expired(g_app_ctx.timer_misc)) {
-		printf("EVENT: EV_TIMEOUT_MISC\n");
 		return EV_TIMEOUT_MISC;
 	}
 
 	if (timer_drv_expired(g_app_ctx.timer_timeout_block)) {
-		printf("EVENT: EV_TIMEOUT_BLOCK\n");
 		return EV_TIMEOUT_BLOCK_CTR;
 	}
 
 	if (timer_drv_expired(g_app_ctx.timer_misc_err)) {
-		printf("EVENT_ EV_TIMEOUT_MISC_ERROR\n");
 		return EV_TIMEOUT_MISC_ERROR;
 	}
 	if (reader_drv_event()) {
 		reader_drv_card(g_app_ctx.card_buff, &g_app_ctx.card_len);
 		if (auth_id_exists((uint8_t *) g_app_ctx.card_buff)) {
-			printf("EVENT: RCV_CARD_S\n");
 			return EV_RCV_CARD_S;
 		}
-		printf("EVENT: RCV_CARD_F\n");
 		return EV_RCV_CARD_F;
 	}
 	swEvent sw_ev = switch_drv_pop_event();
 	if (sw_ev.event_type == SW_EVENT_CLICK) {
-		printf("EVENT: CLICK\n");
 		return EV_CLICK;
 	}
 	if (sw_ev.event_type == SW_EVENT_DOUBLE_CLICK) {
-		printf("EVENT: DOUBLE_CLICK\n");
 		return EV_DOUBLE_CLICK;
 	}
 	if (sw_ev.event_type == SW_EVENT_LONG_CLICK) {
-		printf("EVENT: LONG_CLICK\n");
 		return EV_LONG_CLICK;
 	}
 
 	encoderDir enc_ev = encoder_drv_pop_event();
 	if (enc_ev == ENC_CW) {
-		// printf("EVENT: ENC_CW\n");
 		return EV_ENC_CW;
 	}
 	if (enc_ev == ENC_CCW) {
-		// printf("EVENT: ENC_CCW\n");
 		return EV_ENC_CCW;
 	}
 

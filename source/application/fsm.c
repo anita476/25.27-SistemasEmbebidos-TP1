@@ -6,8 +6,6 @@
  * Using given fsm example
  */
 FSMState_t *fsm(FSMState_t *p_state_table, EVENT curr_event) {
-	// printf("Event >>%d<<\n", curr_event);
-
 	FSMState_t *p_base = p_state_table; /* save base before walking */
 
 	while (p_state_table->event != curr_event && p_state_table->event != TABLE_END) {

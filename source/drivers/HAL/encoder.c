@@ -2,7 +2,6 @@
 #include "../MCAL/include/gpio.h"
 #include "include/board.h"
 #include "include/switch.h"
-#include <stdio.h>
 static encChannels channel_pins; // to keep them somewhere
 
 static encoderDir queue[ENC_MAX_PENDING_EVENTS];
@@ -25,10 +24,7 @@ bool encoder_drv_init() {
 
 	/* INITIALIZE SWITCH DRV FOR ENCODER SW*/
 	switch_drv_init();
-	sw_handle_t btn1 = switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
-	btn1 == INVALID_SW_HANDLE ? printf("Couldnt initialize sw in pin: %d\n", PIN_SW_ENC) :
-								printf("Initialized sw in pin: %d\n", PIN_SW_ENC);
-
+	switch_drv_register(PIN_SW_ENC, ACTIVE_ON_LOW, PULL_UP);
 	return pisr_drv_register((pisrCallbackPtr_t) encoder_drv_PISR, ENC_PISR_PERIOD);
 }
 

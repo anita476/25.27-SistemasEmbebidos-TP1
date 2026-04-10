@@ -32,12 +32,14 @@ bool reader_drv_init(void) {
 	}
 	return true;
 }
+/*
 void process_raw(void) {
 	printf("char_count=%d\n", char_count);
 	for (int i = 0; i < char_count; i++) {
 		printf("[%d] raw=0x%02X dec=%d char=%c\n", i, buffer[i], buffer[i], buffer[i]);
 	}
 }
+	*/
 static void reader_drv_reset(void) {
 	bit_count = 0;
 	char_count = 0;
@@ -54,7 +56,7 @@ void reader_drv_card(uint8_t *out_buf, uint8_t *out_len) {
 	if (!card_ready) {
 		return;
 	}
-	process_raw();
+	// process_raw();
 	*out_len = CARD_NUM_DIGITS; /* char count will be 19*/
 	memcpy(out_buf, (void *) buffer, CARD_NUM_DIGITS);
 	reader_drv_reset();
