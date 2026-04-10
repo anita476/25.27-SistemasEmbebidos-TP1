@@ -1,6 +1,5 @@
 #include "include/fsm.h"
 #include "include/App_commons.h"
-#include <stdio.h>
 
 /**
  * Using given fsm example

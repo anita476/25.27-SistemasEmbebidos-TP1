@@ -18,9 +18,6 @@
 #include "include/App_commons.h"
 #include "include/auth.h"
 #include "include/fsm_table.h"
-
-#include <stdio.h>
-
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
  ******************************************************************************/

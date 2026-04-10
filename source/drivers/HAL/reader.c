@@ -1,7 +1,6 @@
 #include "include/reader.h"
 #include "../MCAL/include/gpio.h"
 #include "include/board.h"
-#include <stdio.h>
 #include <string.h>
 
 #define CARD_NUM_DIGITS 8

@@ -4,7 +4,6 @@
 #include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
-#include <stdio.h>
 #include <string.h>
 
 /****************************CONST DECLARATION OF DISPLAY ARRAYS ********************************************/
@@ -260,7 +259,6 @@ static void action_do_nothing(void) {
 }
 static void action_menu_next(void) {
 	g_app_ctx.menu_selected = (g_app_ctx.menu_selected + 1) % MENU_ITEMS;
-	// printf("Switched to menu item: %d\n", g_app_ctx.menu_selected + 1);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_prev(void) {
@@ -268,11 +266,9 @@ static void action_menu_prev(void) {
 		g_app_ctx.menu_selected = MENU_ITEMS - 1;
 	else
 		g_app_ctx.menu_selected--;
-	// printf("Switched to menu item: %d\n", g_app_ctx.menu_selected + 1);
 	display_drv_write_word(menu[g_app_ctx.menu_selected].item, menu[g_app_ctx.menu_selected].item_length);
 }
 static void action_menu_select(void) {
-	// printf("Selected menu item %d", g_app_ctx.menu_selected + 1);
 	g_app_ctx.current_state = menu[g_app_ctx.menu_selected].next_state;
 	(menu[g_app_ctx.menu_selected].preset_fun)();
 }
@@ -285,12 +281,10 @@ static void action_show_card(void) {
 	}
 	timer_drv_start(g_app_ctx.timer_misc, 5000, TIM_MODE_SINGLESHOT, NULL);
 	display_drv_write_word(seg_buf, g_app_ctx.card_len);
-	// printf("Printing successful card\n");
 }
 static void action_show_error_card(void) {
 	timer_drv_start(g_app_ctx.timer_misc_err, 7000, TIM_MODE_SINGLESHOT, NULL);
 	display_drv_write_word((uint8_t *) ID_AUTH_ERR, ID_AUTH_ERR_NUM);
-	// printf("Printing UNsuccessful card\n");
 }
 static void action_intensity_increase(void) {
 	if (g_app_ctx.display_intensity < MAX_INTENSITY)
@@ -310,7 +304,6 @@ static void action_intensity_decrease(void) {
 
 static void action_input_pin_increment_dig(void) {
 	g_app_ctx.curr_dig = (g_app_ctx.curr_dig + 1) % 10;
-	// printf("Incremented: %d\n", g_app_ctx.curr_dig);
 	pin_display[pin_display_num - 1] = SEG7_DIGIT(g_app_ctx.curr_dig);
 	display_drv_write_word(pin_display, pin_display_num);
 }
@@ -319,13 +312,11 @@ static void action_input_pin_decrement_dig(void) {
 		g_app_ctx.curr_dig = 9;
 	else
 		g_app_ctx.curr_dig--;
-	// printf("Decremented: %d\n", g_app_ctx.curr_dig);
 	pin_display[pin_display_num - 1] = SEG7_DIGIT(g_app_ctx.curr_dig);
 	display_drv_write_word(pin_display, pin_display_num);
 }
 static void action_process_dig(void) {
 	g_app_ctx.pin[g_app_ctx.pin_ctr++] = g_app_ctx.curr_dig;
-	// printf("Processing digit:%d\n", g_app_ctx.curr_dig);
 	g_app_ctx.curr_dig = 0;
 	if (g_app_ctx.pin_ctr == g_app_ctx.pin_num) {
 		// compare, and set the new state to success or retry !
@@ -437,7 +428,6 @@ static void action_input_card_decrement(void) {
 static void action_process_card_dig(void) {
 	/* auth expects a stirng */
 	g_app_ctx.card_input[g_app_ctx.card_input_ctr++] = g_app_ctx.card_curr_dig + '0';
-	// printf("Processing card digit:%d\n", g_app_ctx.card_curr_dig);
 	g_app_ctx.card_curr_dig = 0;
 	if (g_app_ctx.card_input_ctr == g_app_ctx.card_input_len) {
 		// compare, and set the new state to input pin or menu !
