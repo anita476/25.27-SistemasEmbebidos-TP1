@@ -37,6 +37,11 @@
 > `ENABLE` to `PTB9`
 >
 
+> **Test pin pin assignment**
+>
+> `TP` to `PTB2`
+
+
 ## Shift Register Output assignments
 
 > **Shift register data output to encoder board**
