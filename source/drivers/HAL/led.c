@@ -18,14 +18,15 @@ bool led_drv_init(void) {
 		return false;
 	}
 	shift_register_drv_sel_led(LED_SEL_NONE);
+	return true;
 }
 
 void led_drv_on_success(void) {
-	shift_register_drv_sel_digit(SUCCESS_LED);
+	shift_register_drv_sel_led(SUCCESS_LED);
 }
 
 void led_drv_off_success(void) {
-	shift_register_drv_sel_digit(LED_SEL_NONE);
+	shift_register_drv_sel_led(LED_SEL_NONE);
 }
 
 void led_drv_blink_failure(void) {
@@ -38,9 +39,9 @@ void led_drv_stop_blink_failure(void) {
 
 static void toggle_led(void) {
 	if (blink_on) {
-		shift_register_drv_sel_digit(LED_SEL_NONE);
+		shift_register_drv_sel_led(LED_SEL_NONE);
 	} else {
-		shift_register_drv_sel_digit(FAILURE_LED);
+		shift_register_drv_sel_led(FAILURE_LED);
 	}
-	blink_on != blink_on;
+	blink_on = !blink_on;
 }

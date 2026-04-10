@@ -11,6 +11,7 @@
 #include "../drivers/HAL/include/board.h"
 #include "../drivers/HAL/include/display.h"
 #include "../drivers/HAL/include/encoder.h"
+#include "../drivers/HAL/include/led.h"
 #include "../drivers/HAL/include/reader.h"
 #include "../drivers/HAL/include/shift_register.h"
 #include "../drivers/HAL/include/switch.h"
@@ -56,6 +57,7 @@ void App_Init(void) {
 	encoder_drv_init();
 	display_drv_init();
 	reader_drv_init();
+	led_drv_init();
 
 	uint8_t display_intensity = MAX_INTENSITY;
 	uint8_t word[] = {SEG7_CHAR('H'), SEG7_CHAR('O'), SEG7_CHAR('L'), SEG7_CHAR('A'), SEG7_BLANK,

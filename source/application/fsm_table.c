@@ -128,13 +128,12 @@ FSMState_t state_menu_main[] = {{EV_ENC_CW, NULL, action_menu_next},
 								{TABLE_END, NULL, action_do_nothing}};
 
 /* FIRST OP ON MENU*/
-FSMState_t state_op_read_card[] = {
-	{EV_RCV_CARD_S, NULL, action_show_card},				/* start a timer and print card*/
-	{EV_RCV_CARD_F, NULL, action_show_error_card},			/* start a timer and print error*/
-	{EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu}, // go back to menu, cancel wait
-	{EV_TIMEOUT_MISC, NULL, action_set_init_pin},			/* we were showing card or failure , now show*/
-	{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
-	{TABLE_END, NULL, action_do_nothing}};
+FSMState_t state_op_read_card[] = {{EV_RCV_CARD_S, NULL, action_show_card},
+								   {EV_RCV_CARD_F, NULL, action_show_error_card},
+								   {EV_LONG_CLICK, NULL, action_stop_misc_timer_and_menu},
+								   {EV_TIMEOUT_MISC, NULL, action_set_init_pin},
+								   {EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
+								   {TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_op_input_card[] = {{EV_ENC_CW, NULL, action_input_card_increment},
 									{EV_ENC_CCW, NULL, action_input_card_decrement},
@@ -156,6 +155,7 @@ FSMState_t state_input_pin[] = {{EV_ENC_CW, NULL, action_input_pin_increment_dig
 								{EV_DOUBLE_CLICK, NULL, action_rollback_pin_digit},
 								{EV_CLICK, NULL, action_process_dig}, /* going to success or not is set frm here*/
 								{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
+								{EV_LONG_CLICK, NULL, action_show_menu},
 								{TABLE_END, NULL, action_do_nothing}};
 
 FSMState_t state_success[] = {{EV_TIMEOUT_MISC, NULL, action_show_greeting}, {TABLE_END, NULL, action_do_nothing}};
@@ -209,7 +209,16 @@ void FSM_InitTable(void) {
 	state_input_pin[2].next_state = state_input_pin; // EV_DOUBLE_CLICK
 	state_input_pin[3].next_state = NULL;			 // EV_CLICK
 	state_input_pin[4].next_state = state_menu_main; // EV_TIMEOUT_MISC_ERR
-	state_input_pin[4].next_state = state_input_pin; // TABLE_END
+	state_input_pin[5].next_state = state_menu_main; /// EV_LONG_CLICK
+	state_input_pin[6].next_state = state_input_pin; // TABLE_END
+
+	FSMState_t state_input_pin[] = {{EV_ENC_CW, NULL, action_input_pin_increment_dig},
+									{EV_ENC_CCW, NULL, action_input_pin_decrement_dig},
+									{EV_DOUBLE_CLICK, NULL, action_rollback_pin_digit},
+									{EV_CLICK, NULL, action_process_dig}, /* going to success or not is set frm here*/
+									{EV_TIMEOUT_MISC_ERROR, NULL, action_show_menu},
+									{EV_LONG_CLICK, NULL, action_show_menu},
+									{TABLE_END, NULL, action_do_nothing}};
 
 	state_success[0].next_state = state_init;	 // EV_TIMEOUT_MISC
 	state_success[1].next_state = state_success; // TABLE_END
@@ -238,8 +247,7 @@ static void action_show_greeting(void) {
 	g_app_ctx.menu_selected = 0;
 
 	// start timer
-	bool ok = timer_drv_start(g_app_ctx.timer_misc, 3000, TIM_MODE_SINGLESHOT, NULL);
-	printf("timer started: %d, id: %d\n", ok, g_app_ctx.timer_misc);
+	timer_drv_start(g_app_ctx.timer_misc, 3000, TIM_MODE_SINGLESHOT, NULL);
 	// show display
 	display_drv_write_word((uint8_t *) GREETING, GREETING_NUM);
 	// exit
@@ -337,10 +345,14 @@ static void action_process_dig(void) {
 			res = auth_id_pin_match(g_app_ctx.card_buff, g_app_ctx.pin, g_app_ctx.pin_num);
 		}
 		if (res) {
+			timer_drv_stop(g_app_ctx.timer_misc_err);
 			preset_success_state();
 			return;
 		} else {
 			g_app_ctx.retry_count--;
+			/* restart timeout for pin input*/
+			timer_drv_start(g_app_ctx.timer_misc_err, 60000, TIM_MODE_SINGLESHOT, NULL);
+
 			if (g_app_ctx.retry_count == 0) {
 				preset_failure_state();
 				return;
@@ -390,7 +402,6 @@ static void action_set_init_pin(void) {
 	pin_display[0] = SEG7_0;
 	display_drv_write_word(pin_display, pin_display_num);
 	/* start a long timer, 30-60 sec, after which session expires */
-
 	timer_drv_start(g_app_ctx.timer_misc_err, 60000, TIM_MODE_SINGLESHOT, NULL);
 }
 static void action_clear_display(void) {
