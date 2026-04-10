@@ -1,5 +1,6 @@
 #include "include/pisr.h"
 #include "hardware.h"
+#include "include/test_pin.h"
 
 static bool active; // evaluate if systick was enabled
 static unsigned int ticks;
@@ -22,6 +23,8 @@ bool pisr_drv_register(pisrCallbackPtr_t fun, unsigned int period) {
 	}
 	if (!active) {
 		// if it wasnt, activate
+		/* we also activate test pin here */
+		test_pin_init();
 		SysTick->CTRL = 0x00; // reset everything
 		SysTick->LOAD = (TICK_MS * PISR_FREQUENCY_HZ * 100) - 1;
 		SysTick->VAL = 0x00; // current value
@@ -38,6 +41,7 @@ bool pisr_drv_register(pisrCallbackPtr_t fun, unsigned int period) {
 }
 
 void SysTick_Handler(void) {
+	gpio_drv_write(TP, HIGH);
 	ticks++;
 	for (int i = 0; i < pIrqs.used_irqs; i++) {
 		if (ticks % pIrqs.callbacks[i].period == 0) {
@@ -47,4 +51,5 @@ void SysTick_Handler(void) {
 	if (ticks == pIrqs.max_period) {
 		ticks = 0;
 	}
+	gpio_drv_write(TP, LOW);
 }

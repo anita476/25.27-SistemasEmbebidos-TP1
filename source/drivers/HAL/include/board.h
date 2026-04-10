@@ -61,4 +61,4 @@
 #define SR_DEC_OE PORTNUM2PIN(PD, 0) // output enable for selectors! (probs unused ..)
 #define SR_SEG_OE PORTNUM2PIN(PC, 4) // output enable for SEGMENTS
 
-#endif // _BOARD_H_
+#endif /* _BOARD_H_ */

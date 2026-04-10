@@ -1,6 +1,7 @@
 #include "include/gpio.h"
 #include "../../../SDK/CMSIS/MK64F12.h"
 #include "../../../SDK/startup/hardware.h"
+#include "include/test_pin.h"
 #include <stdint.h>
 
 /*
@@ -168,6 +169,9 @@ void PORTE_IRQHandler(void) {
 }
 
 static void _execute_callbacks(int port) {
+	/* TEST PIN */
+	gpio_drv_write(TP, HIGH);
+	/*********** */
 	// Obs! In this case i dont need to cycle through the whole PORTX_ISFR, just checking the actual interrupts
 	// configured and checking isr is enough
 	int i = irqCallbacks[port].used;
@@ -180,4 +184,5 @@ static void _execute_callbacks(int port) {
 		}
 		i--;
 	}
+	gpio_drv_write(TP, LOW);
 }
