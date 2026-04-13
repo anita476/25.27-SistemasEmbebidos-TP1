@@ -382,7 +382,7 @@ static void action_set_init_pin(void) {
 	pin_display[0] = SEG7_0;
 	display_drv_write_word(pin_display, pin_display_num);
 	/* start a long timer, 30-60 sec, after which session expires */
-	timer_drv_start(g_app_ctx.timer_misc_err, 60000, TIM_MODE_SINGLESHOT, NULL);
+	timer_drv_start(g_app_ctx.timer_misc_err, 30000, TIM_MODE_SINGLESHOT, NULL);
 }
 
 static void preset_menu_card(void) {
@@ -466,7 +466,7 @@ static void action_set_init_pin_manual(void) {
 	pin_display[pin_display_num - 1] = SEG7_UNDERSCORE;
 	pin_display[0] = SEG7_0;
 	display_drv_write_word(pin_display, pin_display_num);
-	timer_drv_start(g_app_ctx.timer_misc, 30000, TIM_MODE_SINGLESHOT, NULL);
+	timer_drv_start(g_app_ctx.timer_misc_err, 30000, TIM_MODE_SINGLESHOT, NULL);
 }
 
 static void _helper_refresh_card_display(bool show_cursor) {
