@@ -26,7 +26,9 @@
 >
 > `LCLK` to `PTD2`
 >
-> `OE`  to `PTD3`
+> `SR1_OE`  to `PTD3` (selector)
+> 
+> `SR2_OE` to `PTC4` (segments)  
 
 > **Card reader pin assignments**
 > 
